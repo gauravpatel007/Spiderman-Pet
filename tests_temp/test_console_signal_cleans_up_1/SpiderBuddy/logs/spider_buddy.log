@@ -1,0 +1,15 @@
+[2026-10-15 12:31:40] [INFO] [SpiderBuddy]: Logging initialized. Log file: G:\Languages\Projects\Pet\tests_temp\test_console_signal_cleans_up_1\SpiderBuddy\logs\spider_buddy.log
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.Lifecycle]: Primary Spider-Buddy instance acquired.
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.SettingsService]: User settings file not found. Initializing with defaults.
+[2026-10-15 12:31:41] [DEBUG] [SpiderBuddy.SettingsService]: Settings saved to G:\Languages\Projects\Pet\tests_temp\test_console_signal_cleans_up_1\SpiderBuddy\settings.json
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.SessionManager]: Registered WTSRegisterSessionNotification: False
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.Application]: Executing Spider-Buddy startup sequence...
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕷️ Miles Morales
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.BehaviorController]: Activated personality profile for: Miles Morales
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.Application]: Loaded character into animation engine: Miles Morales
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController started.
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor started.
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.Application]: Spider-Buddy launched successfully!
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.Application]: Shutting down Spider-Buddy gracefully...
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor stopped.
+[2026-10-15 12:31:41] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController stopped.

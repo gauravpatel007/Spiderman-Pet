@@ -1,0 +1,20 @@
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy]: Logging initialized. Log file: G:\Languages\Projects\Pet\build\pytest_shutdown\test_console_signal_cleans_up_2\SpiderBuddy\logs\spider_buddy.log
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.Lifecycle]: Primary Spider-Buddy single instance lock acquired successfully.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.SettingsService]: User settings file not found. Initializing with defaults.
+[2026-10-14 16:34:33] [DEBUG] [SpiderBuddy.SettingsService]: Settings saved to G:\Languages\Projects\Pet\build\pytest_shutdown\test_console_signal_cleans_up_2\SpiderBuddy\settings.json
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕷️ Miles Morales (miles_morales)
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕸️ Tom Holland (tom_holland)
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕷️ Miles Morales
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.Application]: Executing Spider-Buddy startup sequence...
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: desktop
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: desktop
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.WindowTracker]: WindowTracker started polling.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.OverlayManager]: OverlayManager started.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController started.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor started.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.Application]: Spider-Buddy launched successfully!
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.Application]: Shutting down Spider-Buddy gracefully...
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor stopped.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController stopped.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.WindowTracker]: WindowTracker stopped.
+[2026-10-14 16:34:33] [INFO] [SpiderBuddy.OverlayManager]: OverlayManager stopped.

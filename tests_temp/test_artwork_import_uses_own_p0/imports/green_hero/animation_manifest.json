@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "canvas": [
+    512,
+    512
+  ],
+  "anchor": [
+    256,
+    488
+  ],
+  "method": "procedural imported cutout",
+  "animations": {
+    "idle": {
+      "frames": [
+        "generated/idle/frame_00.png",
+        "generated/idle/frame_01.png",
+        "generated/idle/frame_02.png",
+        "generated/idle/frame_03.png",
+        "generated/idle/frame_04.png",
+        "generated/idle/frame_05.png",
+        "generated/idle/frame_06.png",
+        "generated/idle/frame_07.png",
+        "generated/idle/frame_08.png",
+        "generated/idle/frame_09.png",
+        "generated/idle/frame_10.png",
+        "generated/idle/frame_11.png",
+        "generated/idle/frame_12.png",
+        "generated/idle/frame_13.png",
+        "generated/idle/frame_14.png",
+        "generated/idle/frame_15.png",
+        "generated/idle/frame_16.png",
+        "generated/idle/frame_17.png",
+        "generated/idle/frame_18.png",
+        "generated/idle/frame_19.png",
+        "generated/idle/frame_20.png",
+        "generated/idle/frame_21.png",
+        "generated/idle/frame_22.png",
+        "generated/idle/frame_23.png"
+      ],
+      "fps": 12,
+      "loop": true,
+      "mirror_allowed": true
+    },
+    "walk": {
+      "frames": [
+        "generated/walk/frame_00.png",
+        "generated/walk/frame_01.png",
+        "generated/walk/frame_02.png",
+        "generated/walk/frame_03.png",
+        "generated/walk/frame_04.png",
+        "generated/walk/frame_05.png",
+        "generated/walk/frame_06.png",
+        "generated/walk/frame_07.png",
+        "generated/walk/frame_08.png",
+        "generated/walk/frame_09.png",
+        "generated/walk/frame_10.png",
+        "generated/walk/frame_11.png",
+        "generated/walk/frame_12.png",
+        "generated/walk/frame_13.png",
+        "generated/walk/frame_14.png",
+        "generated/walk/frame_15.png",
+        "generated/walk/frame_16.png",
+        "generated/walk/frame_17.png",
+        "generated/walk/frame_18.png",
+        "generated/walk/frame_19.png",
+        "generated/walk/frame_20.png",
+        "generated/walk/frame_21.png",
+        "generated/walk/frame_22.png",
+        "generated/walk/frame_23.png"
+      ],
+      "fps": 24,
+      "loop": true,
+      "mirror_allowed": true
+    },
+    "wave": {
+      "frames": [
+        "generated/wave/frame_00.png",
+        "generated/wave/frame_01.png",
+        "generated/wave/frame_02.png",
+        "generated/wave/frame_03.png",
+        "generated/wave/frame_04.png",
+        "generated/wave/frame_05.png",
+        "generated/wave/frame_06.png",
+        "generated/wave/frame_07.png",
+        "generated/wave/frame_08.png",
+        "generated/wave/frame_09.png",
+        "generated/wave/frame_10.png",
+        "generated/wave/frame_11.png",
+        "generated/wave/frame_12.png",
+        "generated/wave/frame_13.png",
+        "generated/wave/frame_14.png",
+        "generated/wave/frame_15.png",
+        "generated/wave/frame_16.png",
+        "generated/wave/frame_17.png",
+        "generated/wave/frame_18.png",
+        "generated/wave/frame_19.png",
+        "generated/wave/frame_20.png",
+        "generated/wave/frame_21.png",
+        "generated/wave/frame_22.png",
+        "generated/wave/frame_23.png"
+      ],
+      "fps": 16,
+      "loop": false,
+      "mirror_allowed": true
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "phase": 2,
+  "technical_gate_passed": false,
+  "visual_review_required": true,
+  "characters": {
+    "miles_morales": {
+      "idle": {
+        "frame_count": 12,
+        "distinct_cropped_poses": 1,
+        "dimensions": [
+          [
+            512,
+            512
+          ]
+        ],
+        "problems": [
+          "No pose variation after removing whole-image translation"
+        ]
+      },
+      "walk": {
+        "frame_count": 12,
+        "distinct_cropped_poses": 1,
+        "dimensions": [
+          [
+            512,
+            512
+          ]
+        ],
+        "problems": [
+          "No pose variation after removing whole-image translation"
+        ]
+      },
+      "sleep": {
+        "frame_count": 1,
+        "distinct_cropped_poses": 1,
+        "dimensions": [
+          [
+            512,
+            512
+          ]
+        ],
+        "problems": [
+          "Only a static pose; an animated sequence is required",
+          "No pose variation after removing whole-image translation"
+        ]
+      }
+    },
+    "tom_holland": {
+      "idle": {
+        "frame_count": 12,
+        "distinct_cropped_poses": 1,
+        "dimensions": [
+          [
+            512,
+            512
+          ]
+        ],
+        "problems": [
+          "No pose variation after removing whole-image translation"
+        ]
+      },
+      "walk": {
+        "frame_count": 12,
+        "distinct_cropped_poses": 1,
+        "dimensions": [
+          [
+            512,
+            512
+          ]
+        ],
+        "problems": [
+          "No pose variation after removing whole-image translation"
+        ]
+      },
+      "sleep": {
+        "frame_count": 1,
+        "distinct_cropped_poses": 1,
+        "dimensions": [
+          [
+            512,
+            512
+          ]
+        ],
+        "problems": [
+          "Only a static pose; an animated sequence is required",
+          "No pose variation after removing whole-image translation"
+        ]
+      }
+    }
+  }
+}

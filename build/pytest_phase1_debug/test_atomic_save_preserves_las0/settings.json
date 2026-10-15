@@ -1,0 +1,29 @@
+{
+  "general": {
+    "character": "tom_holland",
+    "display_mode": "desktop",
+    "target_applications": [
+      "Antigravity",
+      "Visual Studio Code",
+      "Google Chrome",
+      "ChatGPT"
+    ],
+    "scale": 1.0,
+    "opacity": 1.0,
+    "animation_speed": 1.0
+  },
+  "behavior": {
+    "movement_speed": 3.0,
+    "idle_timeout_seconds": 15,
+    "sleep_after_minutes": 5,
+    "enable_climbing": true,
+    "enable_swinging": true,
+    "sound_enabled": true
+  },
+  "system": {
+    "run_on_startup": false,
+    "start_minimized": true,
+    "always_on_top": true,
+    "click_through": false
+  }
+}

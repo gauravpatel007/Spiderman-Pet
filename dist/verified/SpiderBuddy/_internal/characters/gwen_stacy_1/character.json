@@ -1,0 +1,52 @@
+{
+  "id": "gwen_stacy_1",
+  "name": "Gwen stacy 1",
+  "display_name": "\ud83d\udd77\ufe0f Gwen stacy 1",
+  "suit": "11",
+  "version": "1.0.0",
+  "description": "Custom Spider-Man companion: Gwen stacy 1",
+  "base_size": [
+    512,
+    512
+  ],
+  "scale_factor": 1.0,
+  "theme_colors": {
+    "primary": "#E50914",
+    "secondary": "#111111",
+    "accent": "#00F0FF",
+    "web": "#FFFFFF"
+  },
+  "physics": {
+    "walk_speed": 3.4,
+    "run_speed": 6.0,
+    "jump_force": -12.0,
+    "climb_speed": 2.5,
+    "gravity": 0.6
+  },
+  "supported_animations": [
+    "idle",
+    "walk",
+    "run",
+    "jump",
+    "fall",
+    "land",
+    "climb_up",
+    "climb_down",
+    "wall_slide",
+    "perch",
+    "swing",
+    "hang",
+    "sleep",
+    "interact",
+    "dragged",
+    "wake_up",
+    "sit",
+    "stand_up",
+    "wave",
+    "dance",
+    "celebrate"
+  ],
+  "personality": "miles_morales",
+  "custom_character": true,
+  "animation_source": "imported_artwork"
+}

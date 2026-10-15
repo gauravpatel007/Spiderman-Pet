@@ -1,0 +1,117 @@
+{
+  "general": {
+    "character": "miles_morales",
+    "display_mode": "desktop",
+    "target_applications": [
+      "Antigravity",
+      "Visual Studio Code",
+      "Google Chrome",
+      "ChatGPT"
+    ],
+    "scale": 1.0,
+    "opacity": 1.0,
+    "animation_speed": 1.0,
+    "monitor": "primary",
+    "theme": "dark",
+    "hidden": false,
+    "display_fps": 0,
+    "default_position": "bottom_left",
+    "custom_position": [
+      0.1,
+      0.9
+    ]
+  },
+  "behavior": {
+    "movement_speed": 3.0,
+    "idle_timeout_seconds": 15,
+    "sleep_after_minutes": 5,
+    "enable_climbing": true,
+    "enable_swinging": true,
+    "sound_enabled": false,
+    "special_cooldown_seconds": 20,
+    "durations": {
+      "idle": {
+        "min": 4,
+        "max": 9
+      },
+      "walk": {
+        "min": 6,
+        "max": 12
+      },
+      "run": {
+        "min": 3,
+        "max": 6
+      },
+      "sit": {
+        "min": 10,
+        "max": 20
+      },
+      "sleep": {
+        "min": 25,
+        "max": 50
+      },
+      "hang": {
+        "min": 3,
+        "max": 6
+      },
+      "perch": {
+        "min": 4,
+        "max": 8
+      }
+    },
+    "sound_volume": 0.25,
+    "cursor_radius": 180,
+    "inactivity": {
+      "relax_seconds": 120,
+      "sit_seconds": 300,
+      "sleep_seconds": 600
+    },
+    "preset": "normal",
+    "enable_walking": true,
+    "enable_running": true,
+    "enable_jumping": true,
+    "enable_sleeping": true,
+    "enable_sitting": true,
+    "enable_hanging": true,
+    "enable_mouse_following": true,
+    "enable_spider_sense_dodging": true,
+    "enable_comic_bubbles": true,
+    "enable_random_animations": true
+  },
+  "animations": {
+    "enable_window_perching": true,
+    "title_bar_offset": 28,
+    "enabled": {
+      "idle": true,
+      "walk": true,
+      "run": true,
+      "jump": true,
+      "fall": true,
+      "land": true,
+      "climb_up": true,
+      "climb_down": true,
+      "wall_slide": true,
+      "perch": true,
+      "swing": true,
+      "hang": true,
+      "sleep": true,
+      "wake_up": true,
+      "sit": true,
+      "stand_up": true,
+      "wave": true,
+      "dance": true,
+      "celebrate": true,
+      "interact": true,
+      "dragged": true,
+      "title_perch": true,
+      "title_hang": true,
+      "focus_read": true
+    }
+  },
+  "system": {
+    "run_on_startup": false,
+    "start_minimized": true,
+    "always_on_top": true,
+    "click_through": false
+  }
+}

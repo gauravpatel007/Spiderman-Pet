@@ -1,0 +1,266 @@
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy]: Logging initialized. Log file: G:\Languages\Projects\Pet\build\test_art_startup\SpiderBuddy\logs\spider_buddy.log
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy.SettingsService]: User settings file not found. Initializing with defaults.
+[2026-10-14 16:38:22] [DEBUG] [SpiderBuddy.SettingsService]: Settings saved to G:\Languages\Projects\Pet\build\test_art_startup\SpiderBuddy\settings.json
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy.Lifecycle]: Primary Spider-Buddy single instance lock acquired successfully.
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕷️ Miles Morales (miles_morales)
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕸️ Tom Holland (tom_holland)
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕷️ Miles Morales
+[2026-10-14 16:38:22] [INFO] [SpiderBuddy.Application]: Executing Spider-Buddy startup sequence...
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.Application]: Loaded character into animation engine: Miles Morales
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: desktop
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: desktop
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.WindowTracker]: WindowTracker started polling.
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.OverlayManager]: OverlayManager started.
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController started.
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor started.
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.Application]: Spider-Buddy launched successfully!
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: desktop
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: desktop
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: application
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: application
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕸️ Tom Holland
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.Application]: Loaded character into animation engine: Tom Holland Spider-Man
+[2026-10-14 16:38:23] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕷️ Miles Morales
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.Application]: Loaded character into animation engine: Miles Morales
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.Application]: Shutting down Spider-Buddy gracefully...
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor stopped.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController stopped.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.WindowTracker]: WindowTracker stopped.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.OverlayManager]: OverlayManager stopped.
+[2026-10-14 16:38:24] [DEBUG] [SpiderBuddy.SettingsService]: Settings saved to G:\Languages\Projects\Pet\build\test_art_startup\SpiderBuddy\settings.json
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.SettingsService]: Setting updated: general.character = tom_holland
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.Lifecycle]: Primary Spider-Buddy single instance lock acquired successfully.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕷️ Miles Morales (miles_morales)
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕸️ Tom Holland (tom_holland)
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕸️ Tom Holland
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.Application]: Executing Spider-Buddy startup sequence...
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.Application]: Loaded character into animation engine: Tom Holland Spider-Man
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: desktop
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: desktop
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.WindowTracker]: WindowTracker started polling.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.OverlayManager]: OverlayManager started.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController started.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor started.
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.Application]: Spider-Buddy launched successfully!
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: desktop
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: desktop
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: application
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.OverlayManager]: Display mode applied: application
+[2026-10-14 16:38:24] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕷️ Miles Morales
+[2026-10-14 16:38:25] [INFO] [SpiderBuddy.Application]: Loaded character into animation engine: Miles Morales
+[2026-10-14 16:38:25] [INFO] [SpiderBuddy.Application]: Shutting down Spider-Buddy gracefully...
+[2026-10-14 16:38:25] [INFO] [SpiderBuddy.ActivityMonitor]: ActivityMonitor stopped.
+[2026-10-14 16:38:25] [INFO] [SpiderBuddy.BehaviorController]: BehaviorController stopped.
+[2026-10-14 16:38:25] [INFO] [SpiderBuddy.WindowTracker]: WindowTracker stopped.
+[2026-10-14 16:38:25] [INFO] [SpiderBuddy.OverlayManager]: OverlayManager stopped.
+[2026-10-14 16:38:25] [DEBUG] [PIL.Image]: Importing PngImagePlugin
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 587
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:25] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IHDR' 16 13
+[2026-10-14 16:38:26] [DEBUG] [PIL.PngImagePlugin]: STREAM b'IDAT' 41 65536
+[2026-10-14 16:38:30] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕷️ Miles Morales (miles_morales)
+[2026-10-14 16:38:30] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕸️ Tom Holland (tom_holland)
+[2026-10-14 16:38:30] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕷️ Miles Morales (miles_morales)
+[2026-10-14 16:38:30] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕸️ Tom Holland (tom_holland)
+[2026-10-14 16:38:30] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕷️ Miles Morales
+[2026-10-14 16:38:30] [INFO] [SpiderBuddy.CharacterManager]: Active character switched to: 🕸️ Tom Holland
+[2026-10-14 16:38:31] [DEBUG] [SpiderBuddy.StateMachine]: State transitioned: idle -> walk
+[2026-10-14 16:38:31] [DEBUG] [SpiderBuddy.StateMachine]: State transitioned: walk -> dragged
+[2026-10-14 16:38:31] [INFO] [SpiderBuddy.SettingsService]: User settings file not found. Initializing with defaults.
+[2026-10-14 16:38:31] [DEBUG] [SpiderBuddy.SettingsService]: Settings saved to G:\Languages\Projects\Pet\build\test_tmp_settings\settings.json
+[2026-10-14 16:38:31] [DEBUG] [SpiderBuddy.SettingsService]: Settings saved to G:\Languages\Projects\Pet\build\test_tmp_settings\settings.json
+[2026-10-14 16:38:31] [INFO] [SpiderBuddy.SettingsService]: Setting updated: general.display_mode = application
+[2026-10-14 16:38:31] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: desktop
+[2026-10-14 16:38:31] [INFO] [SpiderBuddy.BoundaryController]: Display mode changed to: application
+[2026-10-14 16:38:31] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕷️ Miles Morales (miles_morales)
+[2026-10-14 16:38:31] [INFO] [SpiderBuddy.CharacterManager]: Loaded character profile: 🕸️ Tom Holland (tom_holland)
