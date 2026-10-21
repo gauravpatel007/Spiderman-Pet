@@ -13,6 +13,7 @@ class WebOverlay(QWidget):
         self.movement = movement
         self.points = None
         self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_NoSystemBackground)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setFocusPolicy(Qt.NoFocus)
 
@@ -28,10 +29,27 @@ class WebOverlay(QWidget):
         self.show()
         self.update()
 
+    def nativeEvent(self, event_type, message):
+        import sys
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+            msg = wintypes.MSG.from_address(int(message))
+            if msg.message == 0x0014:  # WM_ERASEBKGND
+                return True, 1
+            if msg.message == 0x0021:  # WM_MOUSEACTIVATE / MA_NOACTIVATE
+                return True, 3
+        return super().nativeEvent(event_type, message)
+
     def paintEvent(self, event):
-        if not self.points:
-            return
         painter = QPainter(self)
+        painter.setCompositionMode(QPainter.CompositionMode_Source)
+        painter.fillRect(self.rect(), Qt.transparent)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+        if not self.points:
+            painter.end()
+            return
         painter.setRenderHint(QPainter.Antialiasing)
         allowed = QRegion()
         for area in self.movement.regions:

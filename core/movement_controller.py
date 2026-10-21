@@ -25,6 +25,7 @@ class MovementController(QObject):
     motion_changed = Signal(float)
     orientation_changed = Signal(float)
     web_changed = Signal(object)
+    trampoline_bounced = Signal(float, float)  # (rebound_vx, rebound_vy)
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -45,6 +46,7 @@ class MovementController(QObject):
         self.is_grounded: bool = False
         self.is_facing_left: bool = False
         self.is_dragging: bool = False
+        self.active_trampoline = None
 
         self.mode = 'ground'
         self.target_vx = 0.0
@@ -56,6 +58,14 @@ class MovementController(QObject):
         self._timer = QTimer(self)
         self._timer.setInterval(16)
         self._timer.timeout.connect(self._update_physics)
+
+    def set_active_trampoline(self, trampoline) -> None:
+        """Assign or update active web trampoline for bounce physics."""
+        self.active_trampoline = trampoline
+
+    def clear_trampoline(self) -> None:
+        """Clear active web trampoline."""
+        self.active_trampoline = None
 
     def set_display_fps(self, fps):
         self._timer.setInterval(33 if int(fps) == 30 else 16)
@@ -87,7 +97,10 @@ class MovementController(QObject):
         self.y = y
         self.clamp_to_bounds()
         self.is_grounded = self._project_position(self.x, self.y+1)[1] < self.y+0.5
-        self.position_changed.emit(int(self.x), int(self.y))
+        rx, ry = round(self.x), round(self.y)
+        if getattr(self, '_last_emitted_pos', None) != (rx, ry):
+            self._last_emitted_pos = (rx, ry)
+            self.position_changed.emit(rx, ry)
 
     def move_to(self, x: float, y: float) -> None:
         self.set_position(x, y)
@@ -106,7 +119,11 @@ class MovementController(QObject):
         allowed = QRegion()
         for area in self.regions:
             allowed |= QRegion(area)
-        footprint = QRegion(QRect(round(x), round(y), self.width, self.height))
+        # Cover fractional edges conservatively: rounding allowed up to half a
+        # pixel below the floor, followed by a snap back on the next substep.
+        left, top = math.floor(x), math.floor(y)
+        footprint = QRegion(QRect(left, top, math.ceil(x + self.width) - left,
+                                 math.ceil(y + self.height) - top))
         if footprint.subtracted(allowed).isEmpty():
             return x, y
         candidates = []
@@ -124,7 +141,10 @@ class MovementController(QObject):
     def clamp_to_bounds(self) -> None:
         if self.regions:
             self.x, self.y = self._project_position(self.x, self.y)
-            self.position_changed.emit(int(self.x), int(self.y))
+            rx, ry = round(self.x), round(self.y)
+            if getattr(self, '_last_emitted_pos', None) != (rx, ry):
+                self._last_emitted_pos = (rx, ry)
+                self.position_changed.emit(rx, ry)
 
     def _monitor_transition(self, x, y):
         if not self.allow_monitor_transitions or self.is_dragging:
@@ -235,6 +255,53 @@ class MovementController(QObject):
             nx, ny = self.x+self.vx*dt, self.y+self.vy*dt
             if self.mode == 'ground':
                 nx, ny = self._monitor_transition(nx, ny)
+
+        # Check interactive web trampoline bounce
+        if (
+            self.active_trampoline
+            and getattr(self.active_trampoline, "is_active", lambda: False)()
+            and self.mode not in ('hold', 'climb', 'drag')
+            and self.vy > 0
+        ):
+            p1, p2 = self.active_trampoline.get_endpoints()
+            dx = p2.x() - p1.x()
+            dy = p2.y() - p1.y()
+            seg_len = math.hypot(dx, dy)
+            if seg_len >= 15.0:
+                prev_feet_y = self.y + self.height
+                curr_feet_x = nx + self.width * 0.5
+                curr_feet_y = ny + self.height
+
+                # Project feet onto trampoline line segment
+                t = ((curr_feet_x - p1.x()) * dx + (curr_feet_y - p1.y()) * dy) / (seg_len * seg_len)
+                if 0.0 <= t <= 1.0:
+                    qx = p1.x() + t * dx
+                    qy = p1.y() + t * dy
+
+                    # Contact when moving down and feet reach or pass through the web
+                    if (prev_feet_y <= qy + 12.0 and curr_feet_y >= qy - 12.0) or abs(curr_feet_y - qy) < 18.0:
+                        # 2D Spring Rebound Formula: upward normal and elastic bounce
+                        nx_u = -dy / seg_len
+                        ny_u = dx / seg_len
+                        if ny_u > 0:
+                            nx_u, ny_u = -nx_u, -ny_u
+
+                        impact_speed = math.hypot(self.vx, self.vy)
+                        spring_rebound_vy = -max(780.0, min(1180.0, abs(self.vy) * 1.35 + 320.0))
+                        spring_rebound_vx = self.vx * 0.85 + nx_u * 220.0
+
+                        self.vx = spring_rebound_vx
+                        self.vy = spring_rebound_vy
+                        self.mode = 'air'
+                        self.target_vx = self.vx
+                        self.is_grounded = False
+
+                        ny = qy - self.height - 2.0  # place right above web
+
+                        # Trigger visual spring oscillation on the trampoline
+                        self.active_trampoline.trigger_bounce(impact_speed=impact_speed)
+                        self.trampoline_bounced.emit(self.vx, self.vy)
+
         px, py = self._project_position(nx, ny)
         contacts = set()
         if abs(px-nx) > 0.001:
@@ -252,7 +319,10 @@ class MovementController(QObject):
             if facing != self.is_facing_left:
                 self.is_facing_left = facing
                 self.direction_changed.emit(facing)
-        self.position_changed.emit(round(self.x), round(self.y))
+        rx, ry = round(self.x), round(self.y)
+        if getattr(self, '_last_emitted_pos', None) != (rx, ry):
+            self._last_emitted_pos = (rx, ry)
+            self.position_changed.emit(rx, ry)
         fresh = contacts-self._contacts
         self._contacts = contacts
         if self._swing:

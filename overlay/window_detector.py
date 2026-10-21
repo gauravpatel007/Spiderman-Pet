@@ -101,12 +101,18 @@ class WindowDetector:
             return None
 
     @classmethod
-    def get_visible_windows(cls):
+    def get_visible_windows(cls, include_self: bool = False):
         windows=[]
         if HAS_WIN32:
             def collect(hwnd, _):
+                try:
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    if not include_self and pid == os.getpid():
+                        return True
+                except Exception:
+                    return True
                 win=cls.inspect(hwnd)
-                if win and win.is_visible and win.title and win.pid != os.getpid():
+                if win and win.is_visible and win.title:
                     windows.append(win)
                 return True
             try:
@@ -149,17 +155,19 @@ class WindowDetector:
 
     @staticmethod
     def matches(window, selection):
+        process = (window.process_name or '').casefold()
+        executable = window.executable_path or ''
+        application = (window.application_name or '').casefold()
         if isinstance(selection,dict):
             path=selection.get('executable_path','')
             if path:
-                return bool(window.executable_path) and os.path.normcase(path)==os.path.normcase(window.executable_path)
-            return bool(selection.get('process_name')) and selection['process_name'].casefold()==window.process_name.casefold()
+                return bool(executable) and os.path.normcase(path)==os.path.normcase(executable)
+            return bool(selection.get('process_name')) and selection['process_name'].casefold()==process
         # Old preferences/custom entries match exact executable/product names.
         # A browser document title can never impersonate a selected application.
         value=str(selection).strip().casefold()
-        return bool(value) and value in {window.process_name.casefold(),
-            window.process_name.removesuffix('.exe').casefold(),
-            window.application_name.casefold(),window.executable_path.casefold()}
+        return bool(value) and value in {process, process.removesuffix('.exe'),
+            application, executable.casefold()}
 
     @classmethod
     def find_window_by_title_substring(cls, selection):

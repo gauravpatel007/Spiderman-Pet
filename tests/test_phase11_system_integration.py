@@ -78,16 +78,30 @@ def test_main_window_tabs_and_controls(qapp):
     win = MainWindow(char_mgr)
 
     # Navigation pages count
-    assert win.navigation.count() >= 7
+    assert win.navigation.count() == 7
     page_names = [win.navigation.item(i).text() for i in range(win.navigation.count())]
-    assert "Dashboard" in page_names
-    assert "Characters" in page_names
-    assert "Display Mode" in page_names
-    assert "Applications" in page_names
-    assert "Animations" in page_names
-    assert "Behavior" in page_names
-    assert "Appearance" in page_names
-    assert "Settings" in page_names
+    assert page_names in (
+        [
+            "Home",
+            "Characters",
+            "Activities",
+            "Desktop & Apps",
+            "Focus & Breaks",
+            "Controls",
+            "Settings",
+        ],
+        [
+            "Dashboard",
+            "Characters",
+            "Animations",
+            "Display Mode",
+            "Behavior",
+            "Appearance",
+            "Settings",
+        ]
+    )
+    # Verify Activities/Animations is at 3rd position (1-based index 3, 0-based index 2)
+    assert win.navigation.item(2).text() in ("Activities", "Animations")
 
     # Check status updates
     win.set_status(CharacterState.IDLE, CharacterState.WALK)

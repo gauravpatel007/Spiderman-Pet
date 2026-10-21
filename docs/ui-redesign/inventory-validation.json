@@ -1,0 +1,21 @@
+{
+  "step": 1,
+  "default_leaf_keys": 98,
+  "inventoried_keys": 105,
+  "unmapped_defaults": [],
+  "destinations": [
+    "Activities",
+    "Characters",
+    "Controls",
+    "Desktop & Apps",
+    "Focus & Breaks",
+    "Home",
+    "Settings"
+  ],
+  "method": "Flatten defaults and inspect literal dotted settings references across ui/app/core/overlay/services; dynamic activity/duration/shortcut keys expanded from defaults. Actions inventoried separately in feature-map.md.",
+  "runtime_changes": false,
+  "activity_count": 24,
+  "unique_keys": true,
+  "all_activities_mapped": true,
+  "verdict": "PASS"
+}

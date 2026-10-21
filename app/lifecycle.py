@@ -2,6 +2,7 @@
 import hashlib
 import logging
 from pathlib import Path
+import sys
 import tempfile
 from typing import Optional
 
@@ -20,15 +21,15 @@ class SingleInstanceLock(QObject):
         self.key = key
         self.server = None
         self.is_primary = False
+        self._mutex_handle = None
         digest = hashlib.sha256(key.encode()).hexdigest()[:24]
         self._ownership = QLockFile(str(Path(tempfile.gettempdir()) / f"spider-buddy-{digest}.lock"))
-        # A long-running companion must never be treated as stale by age alone.
         self._ownership.setStaleLockTime(0)
 
     def _notify_primary(self):
         socket = QLocalSocket()
         socket.connectToServer(self.key)
-        if not socket.waitForConnected(500):
+        if not socket.waitForConnected(700):
             return False
         socket.write(b"SHOW_MAIN_WINDOW\n")
         sent = socket.bytesToWrite() == 0 or socket.waitForBytesWritten(500)
@@ -38,11 +39,29 @@ class SingleInstanceLock(QObject):
     def check_and_lock(self):
         if self.is_primary:
             return True
+
+        # 1. On Windows, check native Win32 Named Mutex first (immune to stale temp files)
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                mutex_name = f"Local\\{self.key}_Mutex"
+                self._mutex_handle = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
+                last_err = ctypes.windll.kernel32.GetLastError()
+                if last_err == 183:  # ERROR_ALREADY_EXISTS
+                    logger.info("Existing Spider-Buddy instance detected via Win32 Named Mutex.")
+                    self._notify_primary()
+                    self.instance_already_running.emit()
+                    return False
+            except Exception as e:
+                logger.debug(f"Win32 mutex check note: {e}")
+
+        # 2. Check QLockFile
         if not self._ownership.tryLock(1000):
-            if self._notify_primary():
-                self.instance_already_running.emit()
-                return False
-            raise RuntimeError("Spider-Buddy is already starting or its instance lock is unavailable.")
+            logger.info("Existing Spider-Buddy instance detected via lock file.")
+            self._notify_primary()
+            self.instance_already_running.emit()
+            return False
+
         try:
             # Support an older running version that has the IPC endpoint only.
             if self._notify_primary():
@@ -52,8 +71,9 @@ class SingleInstanceLock(QObject):
             self.server = QLocalServer(self)
             QLocalServer.removeServer(self.key)
             if not self.server.listen(self.key):
-                raise RuntimeError(f"Cannot create companion IPC server: {self.server.errorString()}")
-            self.server.newConnection.connect(self._on_new_connection)
+                logger.warning(f"Cannot create companion IPC server: {self.server.errorString()}")
+            else:
+                self.server.newConnection.connect(self._on_new_connection)
             self.is_primary = True
             logger.info("Primary Spider-Buddy instance acquired.")
             return True
@@ -83,5 +103,12 @@ class SingleInstanceLock(QObject):
             self.server.close()
             self.server.deleteLater()
             self.server = None
+        if self._mutex_handle:
+            try:
+                import ctypes
+                ctypes.windll.kernel32.CloseHandle(self._mutex_handle)
+                self._mutex_handle = None
+            except Exception:
+                pass
         self.is_primary = False
         self._ownership.unlock()

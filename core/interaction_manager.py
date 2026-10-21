@@ -2,7 +2,7 @@
 import math
 import random
 import time
-from PySide6.QtCore import QObject, QPoint, Signal, Qt, QTimer
+from PySide6.QtCore import QObject, QPoint, QRect, Signal, Qt, QTimer
 from PySide6.QtGui import QCursor, QGuiApplication
 from PySide6.QtWidgets import QMenu, QWidgetAction, QSlider
 from services.settings_service import get_settings
@@ -11,42 +11,79 @@ from .state_machine import CharacterState, CharacterState as C
 
 def is_shift_pressed() -> bool:
     """Detect if Shift key is physically pressed in real-time, even when window lacks focus."""
-    try:
-        import ctypes
-        user32 = ctypes.windll.user32
-        # Check VK_SHIFT (0x10), VK_LSHIFT (0xA0), VK_RSHIFT (0xA1)
-        if (user32.GetAsyncKeyState(0x10) & 0x8000) != 0:
-            return True
-        if (user32.GetAsyncKeyState(0xA0) & 0x8000) != 0:
-            return True
-        if (user32.GetAsyncKeyState(0xA1) & 0x8000) != 0:
-            return True
-        if (user32.GetKeyState(0x10) & 0x8000) != 0:
-            return True
-    except Exception:
-        pass
+    import sys
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            # Check VK_SHIFT (0x10), VK_LSHIFT (0xA0), VK_RSHIFT (0xA1)
+            if (user32.GetAsyncKeyState(0x10) & 0x8000) != 0:
+                return True
+            if (user32.GetAsyncKeyState(0xA0) & 0x8000) != 0:
+                return True
+            if (user32.GetAsyncKeyState(0xA1) & 0x8000) != 0:
+                return True
+            return False
+        except Exception:
+            pass
     try:
         from PySide6.QtGui import QGuiApplication
         from PySide6.QtCore import Qt
-        if bool(QGuiApplication.keyboardModifiers() & Qt.ShiftModifier):
-            return True
+        return bool(QGuiApplication.keyboardModifiers() & Qt.ShiftModifier)
     except Exception:
-        pass
-    return False
+        return False
+
+def is_ctrl_pressed() -> bool:
+    """Detect if Control key is physically pressed in real-time, even when window lacks focus."""
+    import sys
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            # Check VK_CONTROL (0x11), VK_LCONTROL (0xA2), VK_RCONTROL (0xA3)
+            if (user32.GetAsyncKeyState(0x11) & 0x8000) != 0:
+                return True
+            if (user32.GetAsyncKeyState(0xA2) & 0x8000) != 0:
+                return True
+            if (user32.GetAsyncKeyState(0xA3) & 0x8000) != 0:
+                return True
+            return False
+        except Exception:
+            pass
+    try:
+        from PySide6.QtGui import QGuiApplication
+        from PySide6.QtCore import Qt
+        return bool(QGuiApplication.keyboardModifiers() & Qt.ControlModifier)
+    except Exception:
+        return False
 
 
 class InteractionManager(QObject):
     open_dashboard_requested = Signal()
     quit_requested = Signal()
+    trampoline_created = Signal(object, object)  # (p1: QPointF, p2: QPointF)
 
     def __init__(self, state_machine, movement, character_mgr, animation=None, behavior=None, parent=None):
         super().__init__(parent)
         self.state_machine, self.movement, self.character_mgr = state_machine, movement, character_mgr
         self.animation, self.behavior = animation, behavior
+        self._ctrl_trampoline_drag = False
+        self._trampoline_start = None
         self.settings = get_settings()
         self.overlay = None
         self._is_dragging = False
         self._shift_drag = False
+        self._is_title_hang_drag = False
+        self._title_hang_activity = None
+        self._is_ground_sit_drag = False
+        self._ground_sit_press_pos = None
+        self._ground_sit_start_x = 0
+        self._ground_sit_start_y = 0
+        self._title_hang_press_pos = None
+        self._title_hang_start_x = 0
+        self._title_hang_start_y = 0
+        self._title_hang_detached = False
+        self.overlay_mgr = None
         self._drag_offset = QPoint()
         self._last_cursor = None
         self._last_sample = time.monotonic()
@@ -68,45 +105,406 @@ class InteractionManager(QObject):
         self.behavior.cursor_attention = False
 
     def handle_mouse_press(self, global_pos, local_pos, button):
-        if button != Qt.LeftButton:
+        if button != Qt.LeftButton and button != 1:
             return False
+
+        # Interactive Web Trampoline: holding Ctrl + Drag draws a spring trampoline!
+        if is_ctrl_pressed() and self.settings.get("behavior.enable_web_trampoline", True):
+            from PySide6.QtCore import QPointF
+            self._ctrl_trampoline_drag = True
+            self._trampoline_start = QPointF(float(global_pos.x()), float(global_pos.y()))
+            self.movement.web_changed.emit((
+                (self._trampoline_start.x(), self._trampoline_start.y()),
+                (self._trampoline_start.x(), self._trampoline_start.y()),
+            ))
+            if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                self.overlay.show_speech_bubble("🕸️ Drag to draw Web Trampoline!", 1400, "comic")
+            return True
+
         is_shift = is_shift_pressed()
         self._shift_drag = is_shift
         # If user moves him normally without Shift, unpin him!
         if not is_shift and hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
             self.behavior.set_pinned(False)
 
-        self.behavior.user_override()
+        # Check if currently attached to title bar (title_hang or title_perch)
+        if self.state_machine.current_state in (C.TITLE_HANG, C.TITLE_PERCH):
+            self._is_title_hang_drag = True
+            self._title_hang_activity = self.state_machine.current_state
+            self._title_hang_press_pos = global_pos
+            self._title_hang_start_x = self.movement.x
+            self._title_hang_start_y = self.movement.y
+            self._title_hang_detached = False
+            self._drag_offset = local_pos
+            self._is_dragging = self.movement.is_dragging = True
+            if self.behavior:
+                self.behavior.user_override()
+            self.movement.set_motion("hold", 0.0, 0.0)
+            return True
+
+        # Check if currently sitting on the ground (ground sit drag like title perch)
+        if self.state_machine.current_state == C.SIT and self.settings.get("behavior.enable_ground_sit_drag", True):
+            self._is_ground_sit_drag = True
+            self._ground_sit_press_pos = global_pos
+            self._ground_sit_start_x = self.movement.x
+            self._ground_sit_start_y = self.movement.y
+            self._drag_offset = local_pos
+            self._is_dragging = self.movement.is_dragging = True
+            if self.behavior:
+                self.behavior.user_override()
+            self.movement.set_motion("hold", 0.0, 0.0)
+            return True
+
+        if self.behavior:
+            self.behavior.user_override()
         self._is_dragging = self.movement.is_dragging = True
         self._drag_offset = local_pos
         self.state_machine.transition_to(C.DRAGGED, force=True)
         return True
 
     def handle_mouse_move(self, global_pos):
+        if self._ctrl_trampoline_drag and self._trampoline_start is not None:
+            self.movement.web_changed.emit((
+                (self._trampoline_start.x(), self._trampoline_start.y()),
+                (float(global_pos.x()), float(global_pos.y())),
+            ))
+            return True
+
         if not self._is_dragging:
             return False
+
+        if self._is_title_hang_drag:
+            # Check downward pull distance and horizontal movement
+            press_pos = self._title_hang_press_pos or global_pos
+            dx = global_pos.x() - press_pos.x()
+            dy = global_pos.y() - press_pos.y()
+
+            # Detach ONLY on an intentional downward yank (> 70px and predominantly vertical dy > 1.8 * abs(dx)):
+            # While dragging horizontally left-to-right, he will NEVER fall to the ground!
+            if dy > 70 and dy > 1.8 * abs(dx):
+                self._is_title_hang_drag = False
+                self._title_hang_detached = True
+                self._is_dragging = self.movement.is_dragging = False
+
+                # Reset orientation to upright and clear web line
+                self.movement.orientation_changed.emit(0.0)
+                self.movement.web_changed.emit(None)
+
+                # Stop docking timer in overlay manager if present
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_state = None
+                    self.overlay_mgr._dock_timer.stop()
+                    self.overlay_mgr._dock_relative_x = None
+                    self.overlay_mgr._dock_area = None
+
+                # Visual comic bubble feedback
+                if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                    self.overlay.show_speech_bubble("WHOA! 🕸️ Detached!", 1600, "action")
+
+                # Transition to FALL state with physics gravity!
+                self.movement.set_motion("jump", 0.0, 30.0)
+                self.state_machine.transition_to(C.FALL, force=True)
+                return True
+
+            # Dragging horizontally along the TOP bar without falling to the ground:
+            dock_area = None
+            if hasattr(self, 'overlay_mgr') and self.overlay_mgr and getattr(self.overlay_mgr, '_dock_area', None):
+                dock_area = self.overlay_mgr._dock_area
+            elif self.movement.active_region():
+                dock_area = self.movement.active_region()
+            elif self.movement.regions:
+                dock_area = self.movement.regions[0]
+
+            new_x = global_pos.x() - self._drag_offset.x()
+            if dock_area is not None:
+                min_x = dock_area.x() + 8
+                max_x = max(min_x, dock_area.x() + dock_area.width() - self.movement.width - 8)
+                new_x = max(min_x, min(max_x, new_x))
+
+            offset = max(0, min(120, int(self.settings.get('animations.title_bar_offset', 28))))
+            activity = getattr(self, '_title_hang_activity', self.state_machine.current_state)
+
+            if activity == C.TITLE_PERCH:
+                # Key 7 (title_perch): retains title_perch across entire horizontal drag
+                perch_y = (dock_area.y() if dock_area else 0) - self.movement.height + offset
+                self.movement.set_position(new_x, perch_y)
+                self.movement.orientation_changed.emit(0.0)
+                self.movement.web_changed.emit(None)
+                if self.state_machine.current_state != C.TITLE_PERCH:
+                    self.state_machine.transition_to(C.TITLE_PERCH, force=True)
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_state = 'title_perch'
+                    self.overlay_mgr.update_dock_drag_position(new_x)
+            else:
+                # Key 6 (title_hang): retains title_hang across entire horizontal drag
+                hang_y = (dock_area.y() if dock_area else 0) + offset
+                elastic_y = hang_y + max(-4.0, min(8.0, dy * 0.15))
+                self.movement.set_position(new_x, elastic_y)
+                self.movement.orientation_changed.emit(180.0)
+                cx = new_x + self.movement.width / 2.0
+                top_anchor_y = dock_area.y() if dock_area is not None else (hang_y - offset)
+                attach_y = elastic_y + self.movement.height * 0.18
+                self.movement.web_changed.emit(((cx, top_anchor_y), (cx, attach_y)))
+                if self.state_machine.current_state != C.TITLE_HANG:
+                    self.state_machine.transition_to(C.TITLE_HANG, force=True)
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_state = 'title_hang'
+                    self.overlay_mgr.update_dock_drag_position(new_x)
+
+            return True
+
+        if self._is_ground_sit_drag:
+            press_pos = self._ground_sit_press_pos or global_pos
+            dx = global_pos.x() - press_pos.x()
+            dy = global_pos.y() - press_pos.y()
+
+            # Detach ONLY on an intentional upward pull (> 65px and predominantly vertical dy < -65 and abs(dy) > 1.6 * abs(dx)):
+            if dy < -65 and abs(dy) > 1.6 * abs(dx):
+                self._is_ground_sit_drag = False
+                self._is_dragging = self.movement.is_dragging = False
+                if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                    self.overlay.show_speech_bubble("HUP! 🕷️ Up we go!", 1400, "action")
+                self.movement.set_motion("jump", 0.0, -180.0)
+                self.state_machine.transition_to(C.JUMP, force=True)
+                return True
+
+            # Dragging horizontally along the GROUND / TASKBAR:
+            active_area = self.movement.active_region() or (self.movement.regions[0] if self.movement.regions else None)
+            new_x = global_pos.x() - self._drag_offset.x()
+            if active_area is not None:
+                min_x = active_area.left() + 4
+                max_x = max(min_x, active_area.right() - self.movement.width - 4)
+                new_x = max(min_x, min(max_x, new_x))
+
+            ground_y = (active_area.bottom() - self.movement.height + 1) if active_area is not None else self._ground_sit_start_y
+            self.movement.set_position(new_x, ground_y)
+            self.movement.orientation_changed.emit(0.0)
+            self.movement.web_changed.emit(None)
+            if self.state_machine.current_state != C.SIT:
+                self.state_machine.transition_to(C.SIT, force=True)
+            return True
+
         if is_shift_pressed():
             self._shift_drag = True
         self.movement.set_position(global_pos.x()-self._drag_offset.x(), global_pos.y()-self._drag_offset.y())
         return True
 
     def handle_mouse_release(self, button):
-        if button != Qt.LeftButton or not self._is_dragging:
+        if button != Qt.LeftButton:
             return False
+
+        if self._ctrl_trampoline_drag and self._trampoline_start is not None:
+            from PySide6.QtCore import QPointF
+            self._ctrl_trampoline_drag = False
+            self.movement.web_changed.emit(None)
+            cur = QPointF(float(self._last_cursor.x() if self._last_cursor else self.movement.x),
+                          float(self._last_cursor.y() if self._last_cursor else self.movement.y))
+            # If cursor didn't move far, use current mouse pos from QCursor
+            p2 = QPointF(float(QCursor.pos().x()), float(QCursor.pos().y()))
+            dx = p2.x() - self._trampoline_start.x()
+            dy = p2.y() - self._trampoline_start.y()
+            if math.hypot(dx, dy) >= 30.0:
+                self.trampoline_created.emit(self._trampoline_start, p2)
+                if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                    self.overlay.show_speech_bubble("🕸️ Trampoline set! Ready to bounce!", 1800, "action")
+            self._trampoline_start = None
+            return True
+
+        if not self._is_dragging:
+            return False
+
+        if self._is_ground_sit_drag:
+            self._is_ground_sit_drag = False
+            self._is_dragging = self.movement.is_dragging = False
+
+            # Settle firmly on the ground in SIT posture!
+            active_area = self.movement.active_region() or (self.movement.regions[0] if self.movement.regions else None)
+            if active_area is not None:
+                ground_y = active_area.y() + active_area.height() - self.movement.height
+                self.movement.set_position(self.movement.x, ground_y)
+            self.state_machine.transition_to(C.SIT, force=True)
+            if hasattr(self.behavior, "set_pinned"):
+                self.behavior.set_pinned(True, keep_state=True)
+            if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                self.overlay.show_speech_bubble("Chilling right here! 😎", 1600, "comic")
+            return True
+
+        if self._is_title_hang_drag:
+            self._is_title_hang_drag = False
+            self._is_dragging = self.movement.is_dragging = False
+
+            press_pos = self._title_hang_press_pos or QPoint(int(self.movement.x), int(self.movement.y))
+            cursor_pos = QCursor.pos() if hasattr(QCursor, 'pos') else press_pos
+            dx = cursor_pos.x() - press_pos.x()
+            dy = cursor_pos.y() - press_pos.y()
+
+            if dy > 70 and dy > 1.8 * abs(dx):
+                # Detached downward!
+                self.movement.orientation_changed.emit(0.0)
+                self.movement.web_changed.emit(None)
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_state = None
+                    if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'stop'):
+                        self.overlay_mgr._dock_timer.stop()
+                    self.overlay_mgr._dock_relative_x = None
+                    self.overlay_mgr._dock_area = None
+                self.movement.set_motion("jump", 0.0, 30.0)
+                self.state_machine.transition_to(C.FALL, force=True)
+                return True
+
+            # Otherwise, securely locked on the title bar at the current position!
+            dock_area = None
+            if hasattr(self, 'overlay_mgr') and self.overlay_mgr and getattr(self.overlay_mgr, '_dock_area', None):
+                dock_area = self.overlay_mgr._dock_area
+            elif self.movement.active_region():
+                dock_area = self.movement.active_region()
+            elif self.movement.regions:
+                dock_area = self.movement.regions[0]
+
+            offset = max(0, min(120, int(self.settings.get('animations.title_bar_offset', 28))))
+
+            if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                self.overlay_mgr.update_dock_drag_position(self.movement.x)
+
+            activity = getattr(self, '_title_hang_activity', self.state_machine.current_state)
+            if activity == C.TITLE_PERCH:
+                # Key 7 (title_perch)
+                perch_y = (dock_area.y() if dock_area else 0) - self.movement.height + offset
+                self.movement.set_position(self.movement.x, perch_y)
+                self.movement.orientation_changed.emit(0.0)
+                self.movement.web_changed.emit(None)
+                self.movement.set_motion("hold", 0.0, 0.0)
+                if self.state_machine.current_state != C.TITLE_PERCH:
+                    self.state_machine.transition_to(C.TITLE_PERCH, force=True)
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_state = 'title_perch'
+                    if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
+                        self.overlay_mgr._dock_timer.start()
+                if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                    self.overlay.show_speech_bubble("👀 Window title secured! Perching tight!", 1600, "action")
+            else:
+                # Key 6 (title_hang)
+                hang_y = (dock_area.y() if dock_area else 0) + offset
+                self.movement.set_position(self.movement.x, hang_y)
+                cx = self.movement.x + self.movement.width / 2.0
+                top_y = dock_area.y() if dock_area is not None else (hang_y - offset)
+                attach_y = hang_y + self.movement.height * 0.18
+                self.movement.web_changed.emit(((cx, top_y), (cx, attach_y)))
+                self.movement.orientation_changed.emit(180.0)
+                self.movement.set_motion("hold", 0.0, 0.0)
+                if self.state_machine.current_state != C.TITLE_HANG:
+                    self.state_machine.transition_to(C.TITLE_HANG, force=True)
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_state = 'title_hang'
+                    if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
+                        self.overlay_mgr._dock_timer.start()
+                if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                    self.overlay.show_speech_bubble("🕸️ Top bar secured! Hanging tight!", 1600, "comic")
+            return True
+
         self._is_dragging = self.movement.is_dragging = False
+
+        # Persist last position so companion reopens where left
+        try:
+            self.settings.set('general.last_position', [float(self.movement.x), float(self.movement.y)], auto_save=False)
+        except Exception:
+            pass
 
         is_shift = is_shift_pressed() or self._shift_drag
         if is_shift and hasattr(self.behavior, "set_pinned"):
             # Shift+drag: lock in place, no activities, hold position!
             self.behavior.set_pinned(True)
         else:
-            self.state_machine.transition_to(C.LAND if self.movement.is_grounded else C.FALL, force=True)
+            # Check if dragged to the top-most side (ceiling / window title bar)
+            active_area = self.movement.active_region() or (self.movement.regions[0] if self.movement.regions else None)
+            is_topmost = False
+            if active_area is not None:
+                is_topmost = (self.movement.y <= active_area.y() + 85)
+            else:
+                is_topmost = (self.movement.y <= 85)
+
+            if is_topmost:
+                area = active_area or QRect(0, 0, 1920, 1080)
+                avail_w = max(1, area.width() - self.movement.width)
+                rel_x = max(0.0, min(1.0, (self.movement.x - area.x()) / avail_w))
+                offset = max(0, min(120, int(self.settings.get('animations.title_bar_offset', 28))))
+
+                if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                    self.overlay_mgr._dock_relative_x = rel_x
+                    self.overlay_mgr._dock_area = area
+
+                if rel_x >= 0.75:
+                    # 25% area from right side: Key 7 (title_perch)
+                    perch_y = area.y() - self.movement.height + offset
+                    self.movement.set_position(self.movement.x, perch_y)
+                    self.movement.orientation_changed.emit(0.0)
+                    self.movement.web_changed.emit(None)
+                    self.movement.set_motion("hold", 0.0, 0.0)
+                    if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                        self.overlay_mgr._dock_state = 'title_perch'
+                        if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
+                            self.overlay_mgr._dock_timer.start()
+                    self.state_machine.transition_to(C.TITLE_PERCH, force=True)
+                    if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                        self.overlay.show_speech_bubble("👀 Window title secured! Perching tight!", 1800, "action")
+                else:
+                    # 75% area from left side: Key 6 (title_hang)
+                    hang_y = area.y() + offset
+                    self.movement.set_position(self.movement.x, hang_y)
+                    self.movement.orientation_changed.emit(180.0)
+                    cx = self.movement.x + self.movement.width / 2.0
+                    top_y = area.y()
+                    attach_y = hang_y + self.movement.height * 0.18
+                    self.movement.web_changed.emit(((cx, top_y), (cx, attach_y)))
+                    self.movement.set_motion("hold", 0.0, 0.0)
+                    if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
+                        self.overlay_mgr._dock_state = 'title_hang'
+                        if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
+                            self.overlay_mgr._dock_timer.start()
+                    self.state_machine.transition_to(C.TITLE_HANG, force=True)
+                    if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                        self.overlay.show_speech_bubble("🕸️ Top bar secured! Hanging tight!", 1800, "comic")
+            else:
+                # Check if dropped firmly at the ground floor (sitting posture as in reference photo)
+                is_near_floor = active_area is not None and (self.movement.y >= active_area.y() + active_area.height() - self.movement.height - 40)
+                if is_near_floor:
+                    ground_y = active_area.y() + active_area.height() - self.movement.height
+                    self.movement.set_position(self.movement.x, ground_y)
+                    self.movement.orientation_changed.emit(0.0)
+                    self.movement.web_changed.emit(None)
+                    self.movement.set_motion("hold", 0.0, 0.0)
+                    self.state_machine.transition_to(C.SIT, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
+                    if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                        self.overlay.show_speech_bubble("Chilling on the floor! 🕷️", 1800, "comic")
+                else:
+                    self.state_machine.transition_to(C.LAND if self.movement.is_grounded else C.FALL, force=True)
 
         self._shift_drag = False
         return True
 
-    def play_activity(self, state: CharacterState):
-        """Immediately test or play an activity on Spider-Man."""
+    def spawn_trampoline_below(self, width_px: float = 240.0, offset_y: float = 90.0) -> None:
+        """Spawn an active web trampoline right below Spider-Man."""
+        if not self.settings.get("behavior.enable_web_trampoline", True):
+            return
+        from PySide6.QtCore import QPointF
+        center_x = self.movement.x + self.movement.width * 0.5
+        feet_y = self.movement.y + self.movement.height
+        p1 = QPointF(center_x - width_px * 0.5, feet_y + offset_y)
+        p2 = QPointF(center_x + width_px * 0.5, feet_y + offset_y)
+        self.trampoline_created.emit(p1, p2)
+        if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+            self.overlay.show_speech_bubble("🕸️ Trampoline set below! Jump on it!", 1800, "action")
+
+    def play_activity(self, state: CharacterState, force: bool = True):
+        """Request a permitted activity; recovery transitions remain backend-owned."""
+        if not force and not self.behavior.activity_enabled(state):
+            return
+        if not self.animation.has_animation(state.value):
+            return
+        if not force and self.settings.get("behavior.focus_mode", False) and state.value not in ("idle", "sit", "sleep", "focus_read"):
+            return
         if hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
             self.behavior.set_pinned(False)
         self.behavior.user_override()
@@ -119,7 +517,7 @@ class InteractionManager(QObject):
         if hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
             self.behavior.set_pinned(False)
         is_override = time.monotonic() < self.behavior._override_until
-        if not is_override and not self.behavior.activity_enabled(state):
+        if not self.behavior.activity_enabled(state):
             return
         if not self.animation.has_animation(state.value) and state.value not in ('title_perch', 'title_hang', 'focus_read'):
             return
@@ -134,6 +532,11 @@ class InteractionManager(QObject):
             if hasattr(self.behavior, "_is_pinned") and getattr(self.behavior, "_is_pinned", False):
                 if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
                     self.overlay.show_speech_bubble("📌 Pinned in place! Drag to move me.", 1800, "comic")
+                return
+            if self.state_machine.current_state == C.TITLE_HANG:
+                if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                    quotes = ["🕸️ Just hanging around!", "Upside down is the best view!", "All blood rushing to my head!", "THWIP!"]
+                    self.overlay.show_speech_bubble(random.choice(quotes), 1800, "comic")
                 return
             self._request(C.WAVE)
             if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
@@ -165,6 +568,8 @@ class InteractionManager(QObject):
             or not self.overlay
             or not self.overlay.isVisible()
             or not self.settings.get('behavior.enable_mouse_following', True)
+            or self.settings.get('behavior.focus_mode', False)
+            or self.state_machine.current_state == C.FOCUS_READ
             or getattr(self.behavior, "_is_pinned", False)
         ):
             self._last_cursor = None
@@ -205,7 +610,7 @@ class InteractionManager(QObject):
             and not getattr(self.behavior, "_is_pinned", False)
             and not self._is_dragging
             and not self._menu_open
-            and self.state_machine.current_state not in (C.DRAGGED, C.SLEEP)
+            and self.state_machine.current_state not in (C.DRAGGED, C.SLEEP, C.TITLE_HANG, C.TITLE_PERCH)
             and (now - self._last_dodge_time >= 1.8)
         )
 
@@ -282,6 +687,8 @@ class InteractionManager(QObject):
             action.triggered.connect(lambda checked=False, state=state: self._request(state))
         web_act = menu.addAction('🕸️ Shoot Web')
         web_act.triggered.connect(lambda: self.shoot_web_at(global_pos))
+        tramp_act = menu.addAction('🕸️ Web Trampoline (Spawn below me)')
+        tramp_act.triggered.connect(lambda: self.spawn_trampoline_below())
         if hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
             unpin_act = menu.addAction('📌 Unpin Companion (Resume activities)')
             unpin_act.triggered.connect(lambda: self.behavior.set_pinned(False))
@@ -312,6 +719,11 @@ class InteractionManager(QObject):
         bubble_act.setCheckable(True)
         bubble_act.setChecked(bool(self.settings.get('behavior.enable_comic_bubbles', True)))
         bubble_act.toggled.connect(lambda enabled: self.settings.set('behavior.enable_comic_bubbles', enabled))
+
+        hotkey_act = fx_menu.addAction('⌨️ Quick Animation Keys (1..0)')
+        hotkey_act.setCheckable(True)
+        hotkey_act.setChecked(bool(self.settings.get('behavior.enable_animation_hotkeys', True)))
+        hotkey_act.toggled.connect(lambda enabled: self.settings.set('behavior.enable_animation_hotkeys', enabled))
 
         sound_menu = menu.addMenu('Sound')
         sound = sound_menu.addAction('Enable sounds')

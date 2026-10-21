@@ -1,0 +1,106 @@
+key,default,destination_tab,section,disposition,migration_note,evidence
+animations.authentic_twos,true,Activities,Timing,advanced / verify wiring,Confirm runtime support before exposing an editable control.,core/animation_engine.py:309
+animations.enable_window_perching,true,Activities,Window Activities,retain,,core/activity_policy.py:20; core/behavior_controller.py:445; core/behavior_controller.py:717; ui/main_window.py:1061; ui/main_window.py:442; ui/main_window.py:636; ui/main_window.py:656; ui/main_window.py:673
+animations.enabled.celebrate,true,Activities,Expressions,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.climb_down,true,Activities,Movement,retain,,ui/main_window.py:648
+animations.enabled.climb_up,true,Activities,Movement,retain,,ui/main_window.py:647
+animations.enabled.dance,true,Activities,Expressions,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.dragged,true,Activities,Advanced / Transition Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.fall,true,Activities,Advanced / Transition Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.focus_read,true,Focus & Breaks,Quiet behavior,retain,,core/behavior_controller.py:428
+animations.enabled.hang,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.idle,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.interact,true,Activities,Expressions,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.jump,true,Activities,Movement,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.land,true,Activities,Advanced / Transition Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.perch,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.run,true,Activities,Movement,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.sit,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.sleep,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.stand_up,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.swing,true,Activities,Movement,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.title_hang,true,Activities,Window Activities,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.title_perch,true,Activities,Window Activities,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.wake_up,true,Activities,Rest & Poses,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.walk,true,Activities,Movement,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.wall_slide,true,Activities,Movement,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.enabled.wave,true,Activities,Expressions,retain,,config/default_settings.json; dynamically bound UI/activity policy
+animations.title_bar_offset,28,Desktop & Apps,Window alignment,retain,,core/behavior_controller.py:443; overlay/overlay_manager.py:249; ui/main_window.py:1070; ui/main_window.py:490; ui/main_window.py:499; ui/main_window.py:502
+behavior.automatic_animations,true,Activities,Playback mode,retain,,core/behavior_controller.py:415; core/behavior_controller.py:433; core/behavior_controller.py:434; core/behavior_controller.py:676; ui/main_window.py:1152; ui/main_window.py:1190; ui/main_window.py:1198; ui/main_window.py:1238; ui/main_window.py:347
+behavior.cursor_radius,180,Controls,Mouse interaction,retain,,core/interaction_manager.py:497
+behavior.durations.hang.max,6,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.hang.min,3,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.idle.max,9,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.idle.min,4,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.perch.max,8,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.perch.min,4,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.run.max,6,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.run.min,3,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.sit.max,20,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.sit.min,10,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.sleep.max,50,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.sleep.min,25,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.walk.max,12,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.durations.walk.min,6,Activities,Timing,retain,,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enable_animation_hotkeys,true,Controls,Keyboard,retain,,app/application.py:488; app/application.py:67; core/interaction_manager.py:572; core/interaction_manager.py:573; ui/main_window.py:1433; ui/main_window.py:750; ui/main_window.py:751; ui/system_tray.py:156; ui/system_tray.py:157; ui/system_tray.py:238
+behavior.enable_audio_beat_bobbing,true,Activities,Music & Sound,retain,,app/application.py:237; app/application.py:242; app/application.py:498; services/audio_sync_service.py:228; services/audio_sync_service.py:87; ui/main_window.py:972; ui/system_tray.py:174; ui/system_tray.py:175; ui/system_tray.py:247
+behavior.enable_climbing,true,Activities,Movement,merge legacy switch,Fold into animations.enabled.climb_up + climb_down. Preserve effective disabled state.,core/behavior_controller.py:388; core/behavior_controller.py:462; core/behavior_controller.py:737; ui/main_window.py:649; ui/main_window.py:661; ui/main_window.py:679
+behavior.enable_comic_bubbles,true,Activities,Effects & Toys,retain,,core/interaction_manager.py:567; core/interaction_manager.py:568; overlay/transparent_overlay.py:123; ui/main_window.py:728; ui/system_tray.py:150; ui/system_tray.py:151; ui/system_tray.py:235
+behavior.enable_eye_break_alert,true,Focus & Breaks,Break reminders,retain,,app/application.py:504; services/eye_break_service.py:98; ui/main_window.py:831; ui/system_tray.py:162; ui/system_tray.py:163; ui/system_tray.py:241
+behavior.enable_hanging,true,Activities,Rest & Poses,merge legacy switch,Fold into animations.enabled.hang. Preserve effective disabled state.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enable_heavy_load_reaction,runtime fallback / not declared,Activities,System Reactions,legacy alias,Prefer explicit canonical key; only use alias if canonical key absent.,app/application.py:492; services/system_load_service.py:112; services/system_load_service.py:181
+behavior.enable_heavy_load_scene,true,Activities,System Reactions,retain,,app/application.py:223; app/application.py:492; services/system_load_service.py:112; services/system_load_service.py:181; ui/main_window.py:935; ui/system_tray.py:168; ui/system_tray.py:169; ui/system_tray.py:244
+behavior.enable_jumping,true,Activities,Movement,merge legacy switch,Fold into animations.enabled.jump. Preserve effective disabled state.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enable_mouse_following,true,Controls,Mouse interaction,retain,,core/interaction_manager.py:419
+behavior.enable_music_sync,runtime fallback / not declared,Activities,Music & Sound,legacy alias,Prefer explicit canonical key; only use alias if canonical key absent.,app/application.py:498; services/audio_sync_service.py:228; services/audio_sync_service.py:87
+behavior.enable_random_animations,true,Activities,Playback mode,merge playback mode,Resolve legacy random flag with automatic_animations; retain existing stationary intent.,core/behavior_controller.py:333; core/behavior_controller.py:450; core/behavior_controller.py:691
+behavior.enable_running,true,Activities,Movement,merge legacy switch,Fold into animations.enabled.run. Preserve effective disabled state.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enable_sitting,true,Activities,Rest & Poses,merge legacy switch,Fold into animations.enabled.sit. Preserve effective disabled state.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enable_sleeping,true,Activities,Rest & Poses,merge legacy switch,Fold into animations.enabled.sleep. Preserve effective disabled state.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enable_spider_sense_dodging,true,Controls,Mouse interaction,retain,,core/interaction_manager.py:456; core/interaction_manager.py:562; core/interaction_manager.py:563; overlay/transparent_overlay.py:131; ui/main_window.py:727; ui/system_tray.py:144; ui/system_tray.py:145; ui/system_tray.py:232
+behavior.enable_swinging,true,Activities,Movement,merge legacy switch,Fold into animations.enabled.swing. Preserve effective disabled state.,core/behavior_controller.py:460; core/behavior_controller.py:712; core/behavior_controller.py:739; core/interaction_manager.py:528
+behavior.enable_walking,true,Activities,Movement,merge legacy switch,Fold into animations.enabled.walk. Preserve effective disabled state.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.enabled_number_keys.0,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.1,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.2,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.3,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.4,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.5,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.6,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.7,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.8,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.enabled_number_keys.9,true,Controls,Keyboard,retain,,services/hotkey_service.py:122; services/hotkey_service.py:132; services/hotkey_service.py:134; ui/main_window.py:1206; ui/main_window.py:1208; ui/main_window.py:1212; ui/main_window.py:1220; ui/main_window.py:1432; ui/main_window.py:776
+behavior.eye_break_minutes,10.0,Focus & Breaks,Break reminders,retain,,services/eye_break_service.py:113; ui/main_window.py:1447; ui/main_window.py:843; ui/main_window.py:844; ui/main_window.py:849
+behavior.focus_mode,runtime fallback / not declared,Focus & Breaks,Quiet behavior,retain,,core/behavior_controller.py:428; core/behavior_controller.py:429; core/behavior_controller.py:563; core/behavior_controller.py:688; ui/main_window.py:1088; ui/main_window.py:245; ui/main_window.py:246; ui/system_tray.py:106; ui/system_tray.py:107; ui/system_tray.py:229
+behavior.heavy_load_threshold,runtime fallback / not declared,Activities,System Reactions,advanced / verify wiring,Confirm runtime support before exposing an editable control.,services/system_load_service.py:180
+behavior.hotkeys_require_modifier,runtime fallback / not declared,Controls,Keyboard,retain,,app/application.py:490; app/application.py:68; ui/main_window.py:755; ui/main_window.py:756
+behavior.idle_timeout_seconds,15,Focus & Breaks,Inactivity,legacy / verify use,Do not expose duplicate inactivity controls; preserve stored value until migration audited.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.inactivity.relax_seconds,120,Focus & Breaks,Inactivity,retain,,core/behavior_controller.py:570; core/interaction_manager.py:499
+behavior.inactivity.sit_seconds,300,Focus & Breaks,Inactivity,retain,,core/behavior_controller.py:571
+behavior.inactivity.sleep_seconds,600,Focus & Breaks,Inactivity,retain,,core/behavior_controller.py:572
+behavior.locked_activity,"""dance""",Activities,Playback mode,retain,,core/behavior_controller.py:416; core/behavior_controller.py:433; core/behavior_controller.py:436; core/behavior_controller.py:677; ui/main_window.py:1184; ui/main_window.py:1194; ui/main_window.py:1201; ui/main_window.py:1240
+behavior.movement_speed,3.0,Activities,Timing,retain,,core/behavior_controller.py:222; core/behavior_controller.py:456; core/behavior_controller.py:491; ui/main_window.py:990
+behavior.preset,"""normal""",Activities,Timing,retain,,core/behavior_controller.py:361; core/behavior_controller.py:452; core/behavior_controller.py:653; ui/main_window.py:709
+behavior.sleep_after_minutes,5,Focus & Breaks,Inactivity,legacy / verify use,Do not expose duplicate inactivity controls; preserve stored value until migration audited.,config/default_settings.json; dynamically bound UI/activity policy
+behavior.sound_enabled,false,Activities,Music & Sound,retain,,app/application.py:477; core/interaction_manager.py:578; core/interaction_manager.py:579; services/sound_service.py:26; services/sound_service.py:34; ui/main_window.py:1015
+behavior.sound_volume,0.25,Activities,Music & Sound,retain,,core/interaction_manager.py:583; core/interaction_manager.py:584; services/sound_service.py:29; services/sound_service.py:56; ui/main_window.py:1016
+behavior.special_cooldown_seconds,20,Activities,Timing,retain,,core/behavior_controller.py:160; core/behavior_controller.py:390; core/behavior_controller.py:710
+behavior.wasd_movement_enabled,true,Controls,Keyboard,retain,,config/default_settings.json; dynamically bound UI/activity policy
+general.animation_speed,1.0,Activities,Timing,retain,,core/behavior_controller.py:173; core/behavior_controller.py:235; core/behavior_controller.py:326; core/behavior_controller.py:454; ui/main_window.py:1011
+general.character,"""miles_morales""",Characters,Selection,retain,,app/application.py:265; app/application.py:410
+general.custom_position,"[0.1, 0.9]",Desktop & Apps,Placement,retain,,overlay/overlay_manager.py:297; overlay/overlay_manager.py:316
+general.default_position,"""bottom_left""",Desktop & Apps,Placement,retain,,overlay/overlay_manager.py:288; overlay/overlay_manager.py:317; overlay/overlay_manager.py:332; ui/main_window.py:1013
+general.display_fps,0,Settings,Rendering,retain,,app/application.py:281; app/application.py:481; ui/main_window.py:1012
+general.display_mode,"""desktop""",Desktop & Apps,Applications,retain,,core/interaction_manager.py:553; core/interaction_manager.py:554; overlay/overlay_manager.py:335; overlay/overlay_manager.py:53; ui/main_window.py:1084; ui/main_window.py:254; ui/main_window.py:256; ui/system_tray.py:119; ui/system_tray.py:123; ui/system_tray.py:124; ui/system_tray.py:211
+general.hidden,false,Home,Quick controls,retain,,app/application.py:442; app/application.py:443; overlay/overlay_manager.py:172; overlay/overlay_manager.py:330; ui/main_window.py:1086; ui/main_window.py:219; ui/main_window.py:220; ui/system_tray.py:191; ui/system_tray.py:192; ui/system_tray.py:222; ui/system_tray.py:93
+general.last_position,runtime fallback / not declared,Desktop & Apps,Placement,internal state,Retain restoration data; not a second position control.,app/application.py:517; core/interaction_manager.py:297; overlay/overlay_manager.py:287
+general.monitor,"""primary""",Desktop & Apps,Monitors,retain,,overlay/overlay_manager.py:339; overlay/overlay_manager.py:71; ui/main_window.py:1102; ui/main_window.py:255
+general.opacity,1.0,Characters,Character appearance,retain,,overlay/overlay_manager.py:343; overlay/overlay_manager.py:68; ui/main_window.py:1010
+general.rotation,runtime fallback / not declared,Characters,Character appearance,advanced / verify wiring,Confirm runtime support before exposing an editable control.,overlay/overlay_manager.py:345; overlay/overlay_manager.py:69
+general.scale,1.0,Characters,Character appearance,retain,,app/application.py:277; app/application.py:484; core/interaction_manager.py:558; ui/main_window.py:1009
+general.target_applications,"[""Antigravity"", ""Visual Studio Code"", ""Google Chrome"", ""ChatGPT""]",Desktop & Apps,Applications,retain,,overlay/overlay_manager.py:337; overlay/overlay_manager.py:52; ui/application_selector.py:132; ui/application_selector.py:23; ui/main_window.py:1082; ui/main_window.py:1111
+general.theme,"""dark""",Settings,Appearance,retain,,ui/main_window.py:1021; ui/main_window.py:1080; ui/main_window.py:1156; ui/main_window.py:1333
+system.always_on_top,true,Desktop & Apps,Placement,advanced / verify wiring,Confirm runtime support before exposing an editable control.,config/default_settings.json; dynamically bound UI/activity policy
+system.click_through,false,Controls,Mouse interaction,retain,,overlay/overlay_manager.py:347; overlay/overlay_manager.py:70; ui/main_window.py:1024
+system.run_on_startup,false,Settings,Startup,retain,,app/application.py:486; app/application.py:75; app/application.py:76; ui/main_window.py:1023
+system.start_minimized,true,Settings,Startup,retain,,app/application.py:305; ui/main_window.py:1022

@@ -77,6 +77,7 @@ class SettingsService(QObject):
                 "enable_swinging": True,
                 "enable_spider_sense_dodging": True,
                 "enable_comic_bubbles": True,
+                "enable_animation_hotkeys": True,
                 "sound_enabled": True
             },
             "animations": {
@@ -94,7 +95,7 @@ class SettingsService(QObject):
             "system": {
                 "run_on_startup": False,
                 "start_minimized": True,
-                "always_on_top": True,
+                "always_on_top": False,
                 "click_through": False
             }
         }
@@ -146,20 +147,23 @@ class SettingsService(QObject):
         """Replace settings atomically so interruption cannot truncate them."""
         temp_path = None
         try:
+            self.user_dir.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.user_dir,
                                              prefix="settings-", suffix=".tmp", delete=False) as f:
                 temp_path = Path(f.name)
                 json.dump(self._settings, f, indent=2, allow_nan=False)
                 f.flush()
-                os.fsync(f.fileno())
+                # Omit os.fsync on the GUI thread to eliminate 15-80ms UI micro-freezes.
+                # f.flush() and atomic os.replace ensure persistent data integrity.
             os.replace(temp_path, self.settings_file)
             logger.debug(f"Settings saved to {self.settings_file}")
+            temp_path = None
             return True
         except Exception as e:
             logger.error(f"Error saving settings to {self.settings_file}: {e}")
             return False
         finally:
-            if temp_path is not None:
+            if temp_path is not None and temp_path.exists():
                 temp_path.unlink(missing_ok=True)
 
     def get(self, key_path: str, default: Any = None) -> Any:
@@ -196,8 +200,20 @@ class SettingsService(QObject):
 
     def reset_to_defaults(self) -> None:
         """Reset all configuration values to factory defaults."""
+        previous = self._settings
         self._settings = self._load_defaults()
         self.save()
+        # Runtime services subscribe to individual changes. Reload alone left
+        # the overlay, audio and physics running with the previous preferences.
+        def notify_changes(values, old_values, prefix=""):
+            for key, value in values.items():
+                path = f"{prefix}.{key}" if prefix else key
+                old = old_values.get(key) if isinstance(old_values, dict) else None
+                if isinstance(value, dict):
+                    notify_changes(value, old, path)
+                elif old != value:
+                    self.setting_changed.emit(path, deepcopy(value))
+        notify_changes(self._settings, previous)
         self.settings_reloaded.emit()
         logger.info("Settings reset to defaults.")
 

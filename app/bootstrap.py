@@ -51,9 +51,13 @@ def setup_logging() -> None:
         console_handler.setLevel(logging.INFO)
         handlers.append(console_handler)
 
-    file_handler = RotatingFileHandler(str(log_file), maxBytes=2_000_000, backupCount=3, encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
-    handlers.append(file_handler)
+    try:
+        file_handler = RotatingFileHandler(str(log_file), maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+        file_handler.setLevel(logging.DEBUG)
+        handlers.append(file_handler)
+    except Exception as e:
+        if sys.stdout is not None:
+            sys.stdout.write(f"Notice: Could not attach log file {log_file}: {e}\n")
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
@@ -65,8 +69,33 @@ def setup_logging() -> None:
     logging.getLogger("SpiderBuddy").info(f"Logging initialized. Log file: {log_file}")
 
 
+def ensure_interactive_desktop() -> None:
+    """Ensure process and GUI threads are attached to the interactive user desktop on Windows."""
+    if sys.platform != "win32":
+        return
+    try:
+        import win32service, win32con
+        desk = win32service.OpenDesktop("Default", 0, False, win32con.GENERIC_ALL)
+        if desk:
+            desk.SetThreadDesktop()
+    except Exception:
+        pass
+
+
+def get_user_data_dir() -> Path:
+    """Return persistent user application data directory."""
+    appdata = os.getenv("APPDATA")
+    if appdata:
+        d = Path(appdata) / "SpiderBuddy"
+    else:
+        d = Path.home() / ".spider-buddy"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def bootstrap_environment() -> None:
     """Prepare environment before Qt QApplication instantiation."""
+    ensure_interactive_desktop()
     ensure_site_packages()
     setup_logging()
 
@@ -75,3 +104,16 @@ def bootstrap_environment() -> None:
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
     # Preserve fractional scale factors such as 125%, 150% and 175%.
     os.environ.setdefault("QT_SCALE_FACTOR_ROUNDING_POLICY", "PassThrough")
+
+    # Prevent Chromium from flickering/throttling when transparent companion overlays hover or update
+    existing_flags = os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", "")
+    flags_to_add = (
+        "--disable-direct-composition "
+        "--disable-direct-composition-video-overlays "
+        "--use-angle=d3d11 "
+        "--enable-begin-frame-scheduling "
+        "--disable-features=CalculateNativeWinOcclusion,WindowOcclusionCalculation,MrcMultiplaneOverlay "
+        "--disable-backgrounding-occluded-windows"
+    )
+    if "--disable-direct-composition" not in existing_flags:
+        os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = f"{existing_flags} {flags_to_add}".strip()

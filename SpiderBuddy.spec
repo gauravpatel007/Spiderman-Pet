@@ -11,6 +11,8 @@ datas = [
     (os.path.join(project_dir, 'characters'), 'characters'),
     (os.path.join(project_dir, 'config'), 'config'),
     (os.path.join(project_dir, 'assets'), 'assets'),
+    (os.path.join(project_dir, 'ui', 'qml'), 'ui/qml'),
+    (os.path.join(project_dir, 'BIN', 'Frammer UI'), 'BIN/Frammer UI'),
 ]
 
 hidden_imports = [
@@ -18,6 +20,13 @@ hidden_imports = [
     'PySide6.QtGui',
     'PySide6.QtWidgets',
     'PySide6.QtNetwork',
+    'PySide6.QtQml',
+    'PySide6.QtQuick',
+    'PySide6.QtQuickWidgets',
+    'PySide6.QtWebEngineWidgets',
+    'PySide6.QtWebEngineCore',
+    'http.server',
+    'socketserver',
     'win32gui',
     'win32process',
     'win32con',

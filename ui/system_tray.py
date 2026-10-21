@@ -151,6 +151,30 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.fx_bubble_act.triggered.connect(lambda checked: self.settings.set("behavior.enable_comic_bubbles", checked))
         fx_menu.addAction(self.fx_bubble_act)
 
+        self.fx_hotkey_act = QAction("⌨️ Quick Animation Number Keys (1..0)", self)
+        self.fx_hotkey_act.setCheckable(True)
+        self.fx_hotkey_act.setChecked(bool(self.settings.get("behavior.enable_animation_hotkeys", True)))
+        self.fx_hotkey_act.triggered.connect(lambda checked: self.settings.set("behavior.enable_animation_hotkeys", checked))
+        fx_menu.addAction(self.fx_hotkey_act)
+
+        self.fx_eye_break_act = QAction("💧 60-Min Eye Break Web Alert", self)
+        self.fx_eye_break_act.setCheckable(True)
+        self.fx_eye_break_act.setChecked(bool(self.settings.get("behavior.enable_eye_break_alert", True)))
+        self.fx_eye_break_act.triggered.connect(lambda checked: self.settings.set("behavior.enable_eye_break_alert", checked))
+        fx_menu.addAction(self.fx_eye_break_act)
+
+        self.fx_heavy_load_act = QAction("🏗️ Heavy Load Collapsing Beam (>85%)", self)
+        self.fx_heavy_load_act.setCheckable(True)
+        self.fx_heavy_load_act.setChecked(bool(self.settings.get("behavior.enable_heavy_load_scene", True)))
+        self.fx_heavy_load_act.triggered.connect(lambda checked: self.settings.set("behavior.enable_heavy_load_scene", checked))
+        fx_menu.addAction(self.fx_heavy_load_act)
+
+        self.fx_audio_sync_act = QAction("🎧 Headphone Beat-Bobbing (Music / Audio)", self)
+        self.fx_audio_sync_act.setCheckable(True)
+        self.fx_audio_sync_act.setChecked(bool(self.settings.get("behavior.enable_audio_beat_bobbing", True)))
+        self.fx_audio_sync_act.triggered.connect(lambda checked: self.settings.set("behavior.enable_audio_beat_bobbing", checked))
+        fx_menu.addAction(self.fx_audio_sync_act)
+
         self._update_menu_state()
 
         menu.addSeparator()
@@ -209,6 +233,18 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         if hasattr(self, "fx_bubble_act"):
             self.fx_bubble_act.setChecked(bool(self.settings.get("behavior.enable_comic_bubbles", True)))
+
+        if hasattr(self, "fx_hotkey_act"):
+            self.fx_hotkey_act.setChecked(bool(self.settings.get("behavior.enable_animation_hotkeys", True)))
+
+        if hasattr(self, "fx_eye_break_act"):
+            self.fx_eye_break_act.setChecked(bool(self.settings.get("behavior.enable_eye_break_alert", True)))
+
+        if hasattr(self, "fx_heavy_load_act"):
+            self.fx_heavy_load_act.setChecked(bool(self.settings.get("behavior.enable_heavy_load_scene", True)))
+
+        if hasattr(self, "fx_audio_sync_act"):
+            self.fx_audio_sync_act.setChecked(bool(self.settings.get("behavior.enable_audio_beat_bobbing", True)))
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason in [QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick]:

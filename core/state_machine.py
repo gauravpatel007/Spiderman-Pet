@@ -107,6 +107,7 @@ class StateMachine(QObject):
         self.add_transition(CharacterState.RUN, CharacterState.SWING)
 
         # JUMP / FALL / LAND transitions
+        self.add_transition(CharacterState.IDLE, CharacterState.LAND)
         self.add_transition(CharacterState.JUMP, CharacterState.FALL)
         self.add_transition(CharacterState.JUMP, CharacterState.SWING)
         self.add_transition(CharacterState.JUMP, CharacterState.CLIMB_UP)
@@ -146,6 +147,9 @@ class StateMachine(QObject):
         self.add_transition(CharacterState.CELEBRATE, CharacterState.IDLE)
         self.add_transition(CharacterState.SIT, CharacterState.STAND_UP)
         self.add_transition(CharacterState.SIT, CharacterState.SLEEP)
+        self.add_transition(CharacterState.SIT, CharacterState.JUMP)
+        self.add_transition(CharacterState.SIT, CharacterState.IDLE)
+        self.add_transition(CharacterState.DRAGGED, CharacterState.SIT)
         self.add_transition(CharacterState.STAND_UP, CharacterState.IDLE)
         self.add_transition(CharacterState.SLEEP, CharacterState.WAKE_UP)
         self.add_transition(CharacterState.WAKE_UP, CharacterState.IDLE)
@@ -171,6 +175,12 @@ class StateMachine(QObject):
         self.add_transition(CharacterState.TITLE_HANG, CharacterState.SWING)
         self.add_transition(CharacterState.TITLE_HANG, CharacterState.CLIMB_DOWN)
         self.add_transition(CharacterState.TITLE_HANG, CharacterState.IDLE)
+        self.add_transition(CharacterState.TITLE_HANG, CharacterState.DRAGGED)
+        self.add_transition(CharacterState.DRAGGED, CharacterState.TITLE_HANG)
+        self.add_transition(CharacterState.TITLE_PERCH, CharacterState.DRAGGED)
+        self.add_transition(CharacterState.DRAGGED, CharacterState.TITLE_PERCH)
+        self.add_transition(CharacterState.TITLE_PERCH, CharacterState.TITLE_HANG)
+        self.add_transition(CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH)
         self.add_transition(CharacterState.FOCUS_READ, CharacterState.IDLE)
 
     def add_transition(self, from_state: CharacterState, to_state: CharacterState, condition: Optional[Callable[[], bool]] = None) -> None:
@@ -205,11 +215,11 @@ class StateMachine(QObject):
               new_state != self._current_state):
             self._pending_state = new_state
             return True
-        elif self._current_state == CharacterState.SLEEP and new_state not in (
+        elif not force and self._current_state == CharacterState.SLEEP and new_state not in (
                 CharacterState.SLEEP, CharacterState.WAKE_UP):
             self._pending_state = new_state
             new_state = CharacterState.WAKE_UP
-        elif self._current_state == CharacterState.SIT and new_state not in (
+        elif not force and self._current_state == CharacterState.SIT and new_state not in (
                 CharacterState.SIT, CharacterState.SLEEP, CharacterState.STAND_UP):
             self._pending_state = new_state
             new_state = CharacterState.STAND_UP

@@ -9,6 +9,8 @@ from .window_tracker import WindowTracker
 from .transparent_overlay import TransparentOverlay
 # pyrefly: ignore [missing-import]
 from .overlay_manager import OverlayManager
+from .corner_web_overlay import CornerWebOverlay
+from .trampoline_overlay import TrampolineOverlay
 
 __all__ = [
     "HitTestManager",
@@ -19,4 +21,6 @@ __all__ = [
     "WindowTracker",
     "TransparentOverlay",
     "OverlayManager",
+    "CornerWebOverlay",
+    "TrampolineOverlay",
 ]

@@ -402,21 +402,33 @@ class CharacterSelectionWidget(QWidget):
 
     def _reflow(self):
         cards = list(self.cards.values()) + ([self.add_card] if self.add_card else [])
-        columns = min(3, max(1, (max(1,self.width())-8+16)//196))
+        w = self.width()
+        win = self.window()
+        if win and hasattr(win, "pages") and win.pages:
+            pw = win.pages.width() - 32
+            if pw > 100:
+                w = pw
+        columns = min(3, max(1, (max(1, w) - 8 + 16) // 196))
+        if w > 0:
+            self.setFixedWidth(w)
         for card in cards:
             self.card_grid.removeWidget(card)
         for column in range(3):
             self.card_grid.setColumnStretch(column, 1 if column < columns else 0)
             self.card_grid.setColumnMinimumWidth(column, 0)
-        width = max(160,(self.width()-8-16*(columns-1))//columns)
+        width = max(160, (w - 8 - 16 * (columns - 1)) // columns)
         ancestor = self.parentWidget()
         while ancestor is not None and not isinstance(ancestor, QScrollArea):
             ancestor = ancestor.parentWidget()
-        rows = max(1,(len(cards)+columns-1)//columns)
-        fit_height = ((ancestor.viewport().height()-140-18*(rows-1))//rows) if ancestor else 380
+        rows = max(1, (len(cards) + columns - 1) // columns)
+        fit_height = ((ancestor.viewport().height() - 140 - 18 * (rows - 1)) // rows) if ancestor else 380
         for index, card in enumerate(cards):
-            card.setFixedHeight(max(260,min(380,round(width*1.25),fit_height)))
-            self.card_grid.addWidget(card,index//columns,index%columns)
+            card_h = max(260, min(380, round(width * 1.25), fit_height))
+            card.setFixedHeight(card_h)
+            col = index % columns
+            row = index // columns
+            card.setGeometry(4 + col * (width + 16), 4 + row * (card_h + 16), width, card_h)
+            self.card_grid.addWidget(card, row, col)
 
     def _select_character(self, char_id: str) -> None:
         self.character_mgr.set_active_character(char_id)

@@ -32,7 +32,7 @@ def main() -> int:
 
     qapp = QApplication(sys.argv)
     qapp.setApplicationName("SpiderBuddy")
-    qapp.setApplicationDisplayName("Spider-Buddy")
+    qapp.setApplicationDisplayName("")
     qapp.setOrganizationName("SpiderBuddy")
 
     # Set application top-left icon: only red spiderman face

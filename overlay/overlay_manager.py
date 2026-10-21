@@ -6,6 +6,8 @@ from PySide6.QtWidgets import QApplication
 from .transparent_overlay import TransparentOverlay
 from .web_overlay import WebOverlay
 from .comic_effects_overlay import ComicEffectsOverlay
+from .corner_web_overlay import CornerWebOverlay
+from .trampoline_overlay import TrampolineOverlay
 from .boundary_controller import BoundaryController
 from .monitor_manager import MonitorManager
 from .window_detector import WindowDetector
@@ -28,14 +30,22 @@ class OverlayManager(QObject):
         self.overlay=TransparentOverlay()
         self.web_overlay=WebOverlay(self.overlay, movement)
         self.comic_overlay=ComicEffectsOverlay(self.overlay, movement)
+        self.corner_web_overlay=CornerWebOverlay()
+        self.trampoline_overlay=TrampolineOverlay()
         self.overlay.set_comic_effects(self.comic_overlay)
+        movement.set_active_trampoline(self.trampoline_overlay)
+        self.trampoline_overlay.trampoline_dissolved.connect(movement.clear_trampoline)
         movement.position_changed.connect(self.comic_overlay.update_pet_position)
         self.overlay.render_size_changed.connect(self.comic_overlay.update_pet_size)
         movement.web_changed.connect(self.web_overlay.set_strand)
         movement.orientation_changed.connect(self.overlay.set_pose_rotation)
+        movement.orientation_changed.connect(self.comic_overlay.set_orientation)
         self.window_tracker=WindowTracker(100,self)
+
         self._focus_timer=self.window_tracker._timer  # One shared poller.
         self._dock_state = None
+        self._dock_area = None
+        self._dock_relative_x = None
         self._dock_timer = QTimer(self)
         self._dock_timer.setInterval(200)
         self._dock_timer.timeout.connect(self._refresh_dock)
@@ -61,18 +71,32 @@ class OverlayManager(QObject):
         self.overlay.set_rotation(float(self.settings.get('general.rotation',0)))
         self.overlay.set_click_through(bool(self.settings.get('system.click_through',False)))
         self.boundary_ctrl.monitor_selection=self.settings.get('general.monitor','primary')
+        self._display_mode = self.settings.get('general.display_mode', self._display_mode)
         self.set_display_mode(self._display_mode)
-        self.apply_default_position()
+        last_pos = self.settings.get('general.last_position')
+        if (
+            self._display_mode == 'desktop'
+            and isinstance(last_pos, (list, tuple))
+            and len(last_pos) == 2
+        ):
+            self.movement.set_position(float(last_pos[0]), float(last_pos[1]))
+            self._remember_position()
+        else:
+            self.apply_default_position()
 
     def stop(self):
         self._dock_timer.stop()
         self._dock_state = None
+        self._dock_area = None
+        self._dock_relative_x = None
         self._remember_position()
         self._running=False
         self.window_tracker.stop()
         self.overlay.hide()
         self.web_overlay.hide()
         self.comic_overlay.hide()
+        self.corner_web_overlay.dismiss()
+        self.trampoline_overlay.remove()
         self.owner_changed.emit('Paused')
 
     def _remember_position(self):
@@ -163,25 +187,39 @@ class OverlayManager(QObject):
         else:
             self.overlay.hide()
             self.web_overlay.hide()
+            if hasattr(self, 'comic_overlay'):
+                self.comic_overlay.hide()
         self.visibility_state_changed.emit(is_shown)
 
     def on_activity_changed(self, old, new):
         self.overlay.set_reading(new.value == 'focus_read')
+        if hasattr(self, 'comic_overlay'):
+            self.comic_overlay.set_activity(new.value)
         if old and old.value == 'title_hang' and new.value != 'title_hang':
             self.movement.orientation_changed.emit(0.0)
             self.movement.web_changed.emit(None)
+            self._dock_relative_x = None
+            self._dock_area = None
         if new.value in ('title_perch', 'title_hang', 'focus_read'):
             self.position_activity(new.value)
         else:
             self._dock_state = None
             self._dock_timer.stop()
+            self._dock_relative_x = None
+            self._dock_area = None
+
 
     def _refresh_dock(self):
         if not self._running or not self.session_active or not self.overlay.isVisible():
             return
+        if getattr(self.movement, 'is_dragging', False):
+            # Do NOT reposition while the user is actively dragging along the top bar!
+            return
         if self._dock_state and not self.position_activity(self._dock_state):
             self._dock_state = None
             self._dock_timer.stop()
+            self._dock_relative_x = None
+            self._dock_area = None
             self.movement.set_motion('ground')
 
     def position_activity(self, name):
@@ -196,63 +234,106 @@ class OverlayManager(QObject):
             y = area.y() + area.height() - self.movement.height
         else:
             window = self._active_window if self._display_mode == 'application' else WindowDetector.get_foreground_window()
+            # If foreground window is the desktop or pet's own process, search for the topmost visible app
+            if window and (window.title in ('Program Manager', '') or window.pid == os.getpid()):
+                window = None
+
             if not window or not window.is_visible or window.is_minimized:
                 # Find topmost visible application window
-                vis = WindowDetector.get_visible_windows()
+                vis = [w for w in WindowDetector.get_visible_windows() if w.title not in ('Program Manager', '') and w.pid != os.getpid()]
                 window = vis[0] if vis else None
 
+            # Fallback: if user is testing from the dashboard and no other window is open, allow perching on dashboard
             if not window or not window.is_visible or window.is_minimized:
-                area = self.movement.active_region()
-                if area is None and self.movement.regions:
-                    area = self.movement.regions[0]
-                if area is None:
-                    return False
-            else:
-                candidates = [part.intersected(allowed)
-                              for part in self.monitor_mgr.window_regions(window.rect)
-                              for allowed in self.movement.regions]
-                candidates = [a for a in candidates if a.width() >= self.movement.width and a.height() >= self.movement.height]
-                if not candidates:
-                    area = self.movement.active_region()
-                    if area is None and self.movement.regions:
-                        area = self.movement.regions[0]
-                    if area is None:
-                        return False
+                try:
+                    candidates_vis = WindowDetector.get_visible_windows(include_self=True)
+                except TypeError:
+                    candidates_vis = WindowDetector.get_visible_windows()
+                dashboard_vis = [
+                    w for w in candidates_vis
+                    if w.title not in ('Program Manager', '')
+                    and 'spider-buddy' in w.title.lower()
+                    and w.rect.height() >= 300
+                ]
+                window = dashboard_vis[0] if dashboard_vis else None
+
+            if not window or not window.is_visible or window.is_minimized:
+                return False
+
+            candidates = [part.intersected(allowed)
+                          for part in self.monitor_mgr.window_regions(window.rect)
+                          for allowed in self.movement.regions]
+            candidates = [a for a in candidates if a.width() >= self.movement.width and a.height() >= self.movement.height]
+            if not candidates:
+                return False
+            area = min(candidates, key=lambda r: (r.top(), -r.right()))
+
+            settings = getattr(self, 'settings', None) or get_settings()
+            offset = max(0, min(120, int(settings.get('animations.title_bar_offset', 28))))
+            avail_w = max(1, area.width() - self.movement.width)
+
+            if name in ('title_hang', 'title_perch'):
+                if name == 'title_hang':
+                    # Upside down hang attached to title bar
+                    y = min(area.y() + offset, area.y() + area.height() - self.movement.height)
                 else:
-                    area = min(candidates, key=lambda r: (r.top(), -r.right()))
+                    # Perch / peeking: hands clutch top horizontal bar, head peeks over
+                    y = area.y() - self.movement.height + offset
 
-            offset = max(0, min(120, int(self.settings.get('animations.title_bar_offset', 28))))
-            # Position at TOP RIGHT of window, leaving room for min/max/close buttons (~140px)
-            x = max(area.x() + 10, area.x() + area.width() - self.movement.width - 140)
-
-            if name == 'title_hang':
-                # Upside down hang attached to title bar
-                y = min(area.y() + offset, area.y() + area.height() - self.movement.height)
-            else:
-                # Perch / peeking: hands clutch top horizontal bar, head peeks over
-                y = area.y() - self.movement.height + offset
+                if self._dock_relative_x is None:
+                    # Default initial position: near top-right leaving room for window buttons (~140px)
+                    x = max(area.x() + 10, area.x() + area.width() - self.movement.width - 140)
+                    self._dock_relative_x = max(0.0, min(1.0, (x - area.x()) / avail_w))
+                else:
+                    x = area.x() + int(self._dock_relative_x * avail_w)
+                    x = max(area.x() + 8, min(area.x() + avail_w - 8, x))
 
         self._dock_state = name
+        self._dock_area = area
         self.movement.set_position(x, y)
+        if hasattr(self, 'comic_overlay'):
+            self.comic_overlay.set_activity(name)
         if name == 'title_hang':
             self.movement.orientation_changed.emit(180)
-            cx = self.movement.x + self.movement.width / 2
-            self.movement.web_changed.emit(((cx, area.y()), (cx, self.movement.y + self.movement.height * 0.18)))
+            cx = x + self.movement.width / 2.0
+            top_anchor_y = area.y()
+            attach_y = y + self.movement.height * 0.18
+            self.movement.web_changed.emit(((cx, top_anchor_y), (cx, attach_y)))
+        elif name == 'title_perch':
+            self.movement.orientation_changed.emit(0.0)
+            self.movement.web_changed.emit(None)
+
         if name.startswith('title_') and not self._dock_timer.isActive():
             self._dock_timer.start()
         elif name == 'focus_read':
             self._dock_timer.stop()
         return True
 
+    def update_dock_drag_position(self, x: int):
+        """Update the relative horizontal anchor while dragging along the title bar."""
+        if self._dock_area and self._dock_state in ('title_hang', 'title_perch'):
+            avail_w = max(1, self._dock_area.width() - self.movement.width)
+            self._dock_relative_x = max(0.0, min(1.0, (x - self._dock_area.x()) / avail_w))
+
     def default_position(self, area):
-        width = max(0, area.width()-self.movement.width)
-        height = max(0, area.height()-self.movement.height)
-        choice = self.settings.get('general.default_position', 'bottom_left')
+        choice = self.settings.get('general.default_position', 'bottom_right')
+        width = max(0, area.width() - self.movement.width)
+        height = max(0, area.height() - self.movement.height)
+        if choice == 'bottom_right':
+            return area.x() + max(0, width - 16), area.y() + height
+        if choice == 'bottom_left':
+            return area.x() + min(16, width), area.y() + height
         if choice == 'custom':
+            last_pos = self.settings.get('general.last_position')
+            if last_pos and isinstance(last_pos, (list, tuple)) and len(last_pos) >= 2:
+                lx, ly = float(last_pos[0]), float(last_pos[1])
+                px = max(area.x(), min(lx, area.x() + max(0, area.width() - self.movement.width)))
+                py = max(area.y(), min(ly, area.y() + max(0, area.height() - self.movement.height)))
+                return px, py
             fx, fy = self.settings.get('general.custom_position', [.1, .9])
-            return area.x()+max(0,min(1,float(fx)))*width, area.y()+max(0,min(1,float(fy)))*height
-        x = max(0,width-16) if choice == 'bottom_right' else min(16,width)
-        return area.x()+x, area.y()+height
+            return area.x() + max(0, min(1, float(fx))) * width, area.y() + max(0, min(1, float(fy))) * height
+        x = max(0, width - 16) if choice == 'bottom_right' else min(16, width)
+        return area.x() + x, area.y() + height
 
     def apply_default_position(self):
         area = self.movement.active_region()
@@ -301,3 +382,25 @@ class OverlayManager(QObject):
             self.overlay.set_rotation(float(value))
         elif key=='system.click_through':
             self.overlay.set_click_through(bool(value))
+
+    def set_heavy_load(self, is_heavy: bool, cpu: float = 0.0, ram: float = 0.0):
+        """Route heavy load collapsing beam and strain effects to companion overlays."""
+        if is_heavy and (self.settings.get('behavior.focus_mode', False) or getattr(self.overlay, '_reading', False)):
+            is_heavy = False
+        self.overlay.set_heavy_load(is_heavy, cpu, ram)
+        self.comic_overlay.set_heavy_load(is_heavy, cpu, ram)
+
+    def set_music_playing(self, is_playing: bool, volume: float = 0.0):
+        """Route music beat-bobbing and floating cartoon notes to companion overlays."""
+        self.overlay.set_music_playing(is_playing, volume)
+        self.comic_overlay.set_music_playing(is_playing, volume)
+
+    def trigger_beat(self, intensity: float = 1.0):
+        """Route audio beat hit to companion overlays for head-bob and soundwaves."""
+        self.overlay.trigger_beat(intensity)
+        self.comic_overlay.trigger_beat(intensity)
+
+    def set_battery_charging(self, is_charging: bool, percent: int = 100, character_id: str = ""):
+        """Route battery charging visual effects to companion overlays."""
+        self.overlay.set_battery_charging(is_charging, percent, character_id)
+        self.comic_overlay.set_battery_charging(is_charging, percent, character_id)

@@ -1,5 +1,6 @@
 """Alpha hit testing in the rendered sprite's logical coordinate system."""
 from typing import Optional
+import re
 from PySide6.QtCore import QPoint, QRect
 from PySide6.QtGui import QImage, QPixmap, QRegion
 
@@ -28,14 +29,11 @@ class HitTestManager:
         pixels = bytes(rgba.constBits())
         stride = rgba.bytesPerLine()
         region = QRegion()
+        width = rgba.width()
+        opaque_runs = re.compile(b'[' + re.escape(bytes([self.alpha_threshold])) + b'-\xff]+')
         for y in range(rgba.height()):
             row = y * stride
-            start = None
-            for x in range(rgba.width() + 1):
-                opaque = x < rgba.width() and pixels[row + x * 4 + 3] >= self.alpha_threshold
-                if opaque and start is None:
-                    start = x
-                elif not opaque and start is not None:
-                    region |= QRegion(QRect(start, y, x - start, 1))
-                    start = None
+            alpha = pixels[row + 3:row + width * 4:4]
+            for run in opaque_runs.finditer(alpha):
+                region |= QRegion(QRect(run.start(), y, run.end() - run.start(), 1))
         return region

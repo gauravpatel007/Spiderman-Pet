@@ -27,6 +27,7 @@
     "sleep_after_minutes": 5,
     "enable_climbing": true,
     "enable_swinging": true,
+    "enable_suit_glitch": true,
     "sound_enabled": false,
     "special_cooldown_seconds": 20,
     "durations": {
@@ -76,9 +77,33 @@
     "enable_mouse_following": true,
     "enable_spider_sense_dodging": true,
     "enable_comic_bubbles": true,
-    "enable_random_animations": true
+    "enable_animation_hotkeys": true,
+    "enable_random_animations": true,
+    "enable_heavy_load_scene": true,
+    "enable_audio_beat_bobbing": true,
+    "enable_battery_charging_reaction": true,
+    "enable_eye_break_alert": true,
+    "eye_break_minutes": 10.0,
+    "wasd_movement_enabled": true,
+    "wasd_static_pin": true,
+    "automatic_animations": true,
+    "locked_activity": "dance",
+    "enabled_number_keys": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true,
+      "5": true,
+      "6": true,
+      "7": true,
+      "8": true,
+      "9": true,
+      "0": true
+    },
+    "enable_ground_sit_drag": true
   },
   "animations": {
+    "authentic_twos": true,
     "enable_window_perching": true,
     "title_bar_offset": 28,
     "enabled": {
@@ -111,7 +136,7 @@
   "system": {
     "run_on_startup": false,
     "start_minimized": true,
-    "always_on_top": true,
+    "always_on_top": false,
     "click_through": false
   }
 }

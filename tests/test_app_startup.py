@@ -92,5 +92,59 @@ def test_full_application_lifecycle(character_id, monkeypatch):
     assert not app.main_window.isVisible()
     print("Full application lifecycle verified successfully!")
 
+def test_focus_charging_navigation_and_pause_stability(qapp, qtbot, monkeypatch):
+    """Exercise the recording's conditions with the real app and live renderer."""
+    import uuid
+    from PySide6.QtCore import QTimer
+    from app.lifecycle import SingleInstanceLock
+    from core.state_machine import CharacterState
+    from services.settings_service import get_settings
+    from test_dashboard_interactions import click, ready
+    original_init = SingleInstanceLock.__init__
+    monkeypatch.setattr(SingleInstanceLock, "__init__",
+                        lambda self, key=None, parent=None: original_init(self, uuid.uuid4().hex, parent))
+    settings = get_settings()
+    settings.set("general.character", "tom_holland")
+    settings.set("general.display_mode", "desktop")
+    settings.set("general.hidden", False)
+    settings.set("behavior.focus_mode", False)
+    settings.set("animations.enabled.focus_read", True)
+    app = SpiderBuddyApp(qapp)
+    timer = QTimer()
+    positions = []
+    try:
+        app.startup()
+        app.main_window.show()
+        app.main_window.resize(1380, 840)
+        ready(app.main_window, qtbot)
+        click(app.main_window, qtbot, '[data-framer-name="Focus & Breaks"]')
+        qtbot.waitUntil(lambda: app.main_window._dashboard_tab == "Focus & Breaks")
+        settings.set("behavior.focus_mode", True)
+        app.system_load_service.simulate_heavy_load(True)
+        app.overlay_mgr.set_battery_charging(True, 99, "tom_holland")
+        assert app.state_machine.current_state == CharacterState.FOCUS_READ
+        assert not app.overlay_mgr.overlay._is_heavy_load
+        assert not app.overlay_mgr.comic_overlay._heavy_load_active
+        timer.timeout.connect(lambda: positions.append((app.movement_ctrl.x, app.movement_ctrl.y)))
+        timer.start(16)
+        qtbot.wait(2200)  # Longer than one complete 24-frame Focus clip.
+        timer.stop()
+        assert len(positions) > 30
+        assert len(set(positions)) == 1, set(positions)
+        assert app.overlay_mgr.comic_overlay.isVisible()
+        for tab in ("Home", "Settings", "Focus & Breaks"):
+            click(app.main_window, qtbot, f'[data-framer-name="{tab}"]')
+            qtbot.waitUntil(lambda: app.main_window._dashboard_tab == tab)
+        app.stop_companion()
+        assert not app.overlay_mgr.overlay.isVisible()
+        app.overlay_mgr.set_battery_charging(True, 99, "tom_holland")
+        assert not app.overlay_mgr.comic_overlay.isVisible()
+    finally:
+        timer.stop()
+        app.shutdown()
+        app.main_window.deleteLater()
+        qapp.processEvents()
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

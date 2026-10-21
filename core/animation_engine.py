@@ -87,6 +87,10 @@ class AnimationEngine(QObject):
     def physics_profile(self):
         return dict(self._character.physics) if self._character else {}
 
+    @property
+    def is_playing(self) -> bool:
+        return bool(self._playing)
+
     def set_character(self, character):
         self.cancel()
         self._character=character
@@ -131,9 +135,13 @@ class AnimationEngine(QObject):
         try:
             entries=config.get('frames')
             if entries is None:
-                folder=self._character.animations_path/source_name
-                entries=[str(p.relative_to(self._character.root_path)) for p in
-                         sorted([*folder.glob('*.png'),*folder.glob('*.webp')])]
+                anim_dir = self._character.animations_path / name
+                if anim_dir.is_dir() and any(anim_dir.iterdir()):
+                    folder = anim_dir
+                else:
+                    folder = self._character.animations_path / source_name
+                entries = [str(p.relative_to(self._character.root_path)) for p in
+                           sorted([*folder.glob('*.png'), *folder.glob('*.webp')])]
             if not entries:
                 return None
             fps=max(1,min(60,float(config.get('fps',12))))
@@ -298,6 +306,20 @@ class AnimationEngine(QObject):
                 self._current_frame_idx=min(len(clip.frames)-1,bisect_right(clip.deadlines,time))
                 self._emit_current_frame()
 
+    @property
+    def is_miles(self) -> bool:
+        return bool(self._character and 'miles' in getattr(self._character, 'id', '').lower())
+
+    def is_animated_on_twos(self) -> bool:
+        """Check if character should animate 'on the twos' (12 FPS) in cinematic Spider-Verse style."""
+        try:
+            from services.settings_service import get_settings
+            if not get_settings().get('animations.authentic_twos', True):
+                return False
+        except Exception:
+            pass
+        return self.is_miles
+
     def _advance_frame(self):
         if not self._playing or self._clip is None or self._suspended:
             return
@@ -306,7 +328,14 @@ class AnimationEngine(QObject):
         generation=self._generation
         complete=not clip.loop and self._position_ms>=clip.duration
         time=self._position_ms%clip.duration if clip.loop else min(self._position_ms,clip.duration-.001)
-        self._current_frame_idx=min(len(clip.frames)-1,bisect_right(clip.deadlines,time))
+        on_twos = self.is_animated_on_twos()
+        if on_twos:
+            # Snap to 12 FPS time intervals (83.33ms) for snappy, classic Spider-Verse keyframes
+            step_ms = 1000.0 / 12.0
+            stepped_time = math.floor(time / step_ms) * step_ms
+            self._current_frame_idx=min(len(clip.frames)-1,bisect_right(clip.deadlines,stepped_time))
+        else:
+            self._current_frame_idx=min(len(clip.frames)-1,bisect_right(clip.deadlines,time))
         self._emit_current_frame()
         if generation!=self._generation or not self._playing or self._suspended:
             return
@@ -328,12 +357,18 @@ class AnimationEngine(QObject):
         next_index=(self._current_frame_idx+1)%len(clip.frames) if clip.loop else min(self._current_frame_idx+1,len(clip.frames)-1)
         if clip.interpolate_offsets and clip.offsets[self._current_frame_idx]!=clip.offsets[next_index]:
             delay=min(delay,16)
-        min_fps_delay = 125 if (self._reduced_fps or clip.name == 'sleep') else math.ceil(1000/self._display_fps)
+        if on_twos:
+            min_fps_delay = 83  # 12 FPS for Miles on the twos
+        elif self._reduced_fps or clip.name == 'sleep':
+            min_fps_delay = 125
+        else:
+            min_fps_delay = math.ceil(1000/self._display_fps)
         self._timer.start(max(delay, min_fps_delay))
 
     def _sample_offset(self,clip,index):
         offset=clip.offsets[index]
-        if not clip.interpolate_offsets:
+        if not clip.interpolate_offsets or self.is_animated_on_twos():
+            # Snappy keyframes: no floating-point sub-pixel interpolation on twos
             return offset
         next_index=(index+1)%len(clip.frames) if clip.loop else min(index+1,len(clip.frames)-1)
         time=self._position_ms%clip.duration if clip.loop else min(self._position_ms,clip.duration)

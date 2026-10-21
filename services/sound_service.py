@@ -37,6 +37,13 @@ class SoundService(QObject):
                'wave': 'reaction', 'celebrate': 'reaction', 'dance': 'reaction'}.get(new.value)
         if cue is None or time.monotonic()-self._last_play < .3:
             return
+        self._play_cue(cue)
+
+    def play_test_sound(self):
+        """Preview the configured volume even while automatic cues are muted."""
+        self._play_cue('reaction')
+
+    def _play_cue(self, cue):
         if cue not in self.effects:
             try:
                 from PySide6.QtMultimedia import QSoundEffect

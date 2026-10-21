@@ -6,11 +6,12 @@ import math
 import sys
 from typing import Optional
 
-from PySide6.QtCore import QEvent, QPointF, QPoint, QRect, QSize, Qt, Signal, QTimer
-from PySide6.QtGui import QPainter, QColor, QPen, QPolygonF, QPixmap, QRegion, QTransform
+from PySide6.QtCore import QEvent, QPointF, QPoint, QRect, QRectF, QSize, Qt, Signal, QTimer
+from PySide6.QtGui import QPainter, QColor, QFont, QPen, QPolygonF, QPixmap, QRegion, QTransform
 from PySide6.QtWidgets import QApplication, QWidget
 
 from .hit_test_manager import HitTestManager
+from .headphones import with_headphones
 
 if sys.platform == 'win32':
     _screen_to_client = ctypes.windll.user32.ScreenToClient
@@ -26,9 +27,11 @@ class TransparentOverlay(QWidget):
     drag_ended = Signal()
     context_menu_requested = Signal(QPoint)
     render_size_changed = Signal(int, int)
+    key_pressed = Signal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self._screen_window = None
         self.hit_test = HitTestManager()
         self._current_frame = None
         self._rendered = QPixmap()
@@ -37,6 +40,7 @@ class TransparentOverlay(QWidget):
         self._char_height = 200
         self._rotation = 0.0
         self._pose_rotation = 0.0
+        self._is_inverted = False
         self._reading = False
         self._is_low_battery = False
         self._battery_percent = 100
@@ -60,10 +64,35 @@ class TransparentOverlay(QWidget):
         self._double_click = False
         self._drag_start_pos = QPoint()
         self._press_global = QPoint()
-        self._screen_window = None
         self._click_timer = QTimer(self)
         self._click_timer.setSingleShot(True)
         self._click_timer.timeout.connect(self.clicked.emit)
+
+        # Heavy system load state (>85% CPU/RAM)
+        self._is_heavy_load = False
+        self._heavy_cpu = 0.0
+        self._heavy_ram = 0.0
+
+        # Audio & music synchronization state
+        self._is_music_playing = False
+        self._music_volume = 0.0
+        self._beat_phase = 0.0
+        self._beat_intensity = 1.0
+        self._foot_tap_phase = 0.0
+        self._audio_anim_timer = QTimer(self)
+        self._audio_anim_timer.setInterval(16)
+        self._audio_anim_timer.timeout.connect(self._on_audio_anim_frame)
+
+        # Battery charging visual effects state
+        self._is_charging = False
+        self._charging_percent = 100
+        self._character_id = "miles_morales"
+        self._charging_tick = 0
+        self._stark_optics_flash = 0
+        self._charging_timer = QTimer(self)
+        self._charging_timer.setInterval(70)
+        self._charging_timer.timeout.connect(self._on_charging_tick)
+        self._last_applied_mask = None
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint |
                             Qt.Tool | Qt.WindowDoesNotAcceptFocus)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -76,6 +105,11 @@ class TransparentOverlay(QWidget):
 
     def set_character_height(self, height: int):
         self._char_height = max(80, min(500, int(height)))
+        target_dim = self._char_height
+        if self.size() != QSize(target_dim, target_dim):
+            self.resize(target_dim, target_dim)
+            self.render_size_changed.emit(target_dim, target_dim)
+        self._cache.clear()
         self._refresh_render()
 
     def set_rotation(self, degrees: float):
@@ -95,6 +129,56 @@ class TransparentOverlay(QWidget):
         self._battery_percent = percent
         if changed:
             self.update()
+
+    def set_character_id(self, char_id: str):
+        """Set the active character identifier to determine lore-specific visual effects."""
+        if char_id and self._character_id != char_id:
+            self._character_id = char_id
+            self.update()
+
+    def set_battery_charging(self, is_charging: bool, percent: int = 100, character_id: str = ""):
+        """Toggle character-specific battery charging animations.
+        
+        Miles Morales: Venom Strike bio-electricity absorption with crackling lightning.
+        Tom Holland: Stark Tech nano-suit HUD power surge and holographic battery display.
+        """
+        if character_id:
+            self._character_id = character_id
+
+        changed = (self._is_charging != bool(is_charging) or self._charging_percent != percent)
+        self._is_charging = bool(is_charging)
+        self._charging_percent = int(percent)
+
+        if self._is_charging:
+            if self._character_id != "miles_morales" and not self._charging_timer.isActive():
+                self._stark_optics_flash = 5
+            if not self._charging_timer.isActive():
+                self._charging_timer.start()
+        else:
+            self._charging_timer.stop()
+            self._stark_optics_flash = 0
+            if not self._is_music_playing and not self._glitch_active and not self._is_heavy_load:
+                self._apply_input_region()
+
+        if changed:
+            self.update()
+
+    def _on_charging_tick(self):
+        """Periodic animation tick for lightning crackles and holographic scanlines."""
+        self._charging_tick = (self._charging_tick + 1) % 10000
+        if self._stark_optics_flash > 0:
+            self._stark_optics_flash -= 1
+        self.update()
+
+    def _paint_charging_effects(self, painter: QPainter):
+        """Paint charging effects.
+        
+        Note: Face dots and sprite obstruction removed per user preference.
+        All battery charging visualization is rendered cleanly in the floating
+        yellow capsule indicator in ComicEffectsOverlay.
+        """
+        pass
+
 
     def set_comic_effects(self, comic_effects):
         """Attach companion comic effects overlay for speech bubbles & spider sense."""
@@ -125,9 +209,11 @@ class TransparentOverlay(QWidget):
 
     def trigger_suit_glitch(self, duration_ms: int = 550):
         """Apply temporary chromatic aberration RGB split glitch shader to mimic multiverse glitch."""
+        from services.settings_service import get_settings
+        if not get_settings().get("behavior.enable_suit_glitch", True):
+            return
         self._glitch_active = True
         self._glitch_frame = 0
-        self.clearMask()
         if not self._glitch_timer.isActive():
             self._glitch_timer.start()
         self._glitch_stop_timer.start(duration_ms)
@@ -143,9 +229,51 @@ class TransparentOverlay(QWidget):
         self._apply_input_region()
         self.update()
 
+    def set_heavy_load(self, is_heavy: bool, cpu: float = 0.0, ram: float = 0.0):
+        """Set heavy system load state (>85%) to render strain tremble and comic sweat."""
+        self._is_heavy_load = bool(is_heavy)
+        self._heavy_cpu = float(cpu)
+        self._heavy_ram = float(ram)
+        if not self._is_heavy_load and not self._is_music_playing and not self._glitch_active:
+            self._apply_input_region()
+        self.update()
+
+    def set_music_playing(self, is_playing: bool, volume: float = 0.0):
+        """Set music playing state to enable red-and-black headphones and beat-bobbing."""
+        changed = self._is_music_playing != bool(is_playing)
+        self._is_music_playing = bool(is_playing)
+        if changed:
+            self._refresh_render()
+        self._music_volume = float(volume)
+        if self._is_music_playing:
+            if not self._audio_anim_timer.isActive():
+                self._audio_anim_timer.start()
+        else:
+            if not self._is_heavy_load and not self._glitch_active:
+                self._apply_input_region()
+        self.update()
+
+    def trigger_beat(self, intensity: float = 1.0):
+        """Trigger rhythmic head-bob and sneaker tap on audio beat detection."""
+        self._beat_phase = 0.0
+        self._beat_intensity = max(0.5, min(2.0, float(intensity)))
+        self._foot_tap_phase = 1.0
+        if not self._audio_anim_timer.isActive():
+            self._audio_anim_timer.start()
+        self.update()
+
+    def _on_audio_anim_frame(self):
+        self._beat_phase += 0.065
+        if self._foot_tap_phase > 0.0:
+            self._foot_tap_phase = max(0.0, self._foot_tap_phase - 0.045)
+        if not self._is_music_playing and self._beat_phase >= 2.0 and self._foot_tap_phase <= 0.0:
+            self._audio_anim_timer.stop()
+        self.update()
+
     def set_pose_rotation(self, degrees):
         # Rotate within the existing canvas so physics dimensions stay stable.
         angle = round(float(degrees)/2)*2
+        self._is_inverted = abs(abs(angle) - 180) < 10
         if angle != self._pose_rotation:
             self._pose_rotation = angle
             self._refresh_render()
@@ -156,6 +284,8 @@ class TransparentOverlay(QWidget):
 
     def set_click_through(self, enabled: bool):
         """Optional full click-through; normal mode uses the sprite silhouette."""
+        if self._click_through == bool(enabled):
+            return
         self._click_through = bool(enabled)
         if enabled:
             self._cancel_gesture()
@@ -176,7 +306,7 @@ class TransparentOverlay(QWidget):
         if source is None or source.isNull():
             return
         dpr = max(1.0, self.devicePixelRatioF())
-        key = (source.cacheKey(), self._char_height, self._rotation, self._pose_rotation, self._reading, round(dpr, 4))
+        key = (source.cacheKey(), self._char_height, self._rotation, self._pose_rotation, self._reading, self._is_music_playing, round(dpr, 4))
         if key in self._cache:
             rendered, region, logical = self._cache[key]
             self._cache.move_to_end(key)
@@ -251,6 +381,8 @@ class TransparentOverlay(QWidget):
                 painter.drawLine(274, 183, 280, 183)
 
                 painter.end()
+            if self._is_music_playing:
+                source = with_headphones(source)
             rendered = source.scaledToHeight(height, Qt.SmoothTransformation)
             rendered.setDevicePixelRatio(1)
             if self._pose_rotation:
@@ -268,6 +400,9 @@ class TransparentOverlay(QWidget):
             logical = QSize(max(1, round(rendered.width()/dpr)), max(1, round(rendered.height()/dpr)))
             logical_image = rendered.toImage().scaled(logical, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
             region = self.hit_test.opaque_region(logical_image)
+            baseline_offset = int(logical.height() * (512 - 480) / 512.0) if not getattr(self, '_is_inverted', False) else 0
+            if baseline_offset > 0:
+                region.translate(0, baseline_offset)
             rendered.setDevicePixelRatio(dpr)
             self._cache[key] = (rendered, region, logical)
             # Bound memory use even at 200% DPI; no full-screen backing image.
@@ -275,24 +410,28 @@ class TransparentOverlay(QWidget):
                 self._cache.popitem(last=False)
         self._rendered = rendered
         self._input_region = region
-        if self.size() != logical:
-            self.resize(logical)
-            self.render_size_changed.emit(logical.width(), logical.height())
+        if self.width() < logical.width() or self.height() < logical.height():
+            new_w = max(self.width(), logical.width())
+            new_h = max(self.height(), logical.height())
+            self.resize(new_w, new_h)
+            self.render_size_changed.emit(new_w, new_h)
         self._apply_input_region()
         self.update()
 
     def _apply_input_region(self):
-        # Native window shaping excludes transparent pixels from hit testing
-        # across process boundaries. HTTRANSPARENT alone cannot guarantee that.
-        # An empty Qt mask clears masking, so use an off-window region instead.
-        region = self._input_region
-        self.setMask(region if not region.isEmpty() else QRegion(QRect(-2, -2, 1, 1)))
+        # Translucent click-through hit testing is handled natively via WM_NCHITTEST
+        # in nativeEvent() returning HTTRANSPARENT (-1) for transparent pixels.
+        # Calling SetWindowRgn/setMask at 10-60 FPS destroys Windows DWM swapchain sync,
+        # which causes monitor sync drops, screen flashing, and UI redraw glitches.
+        self._last_applied_mask = None
 
     def _accepts(self, point):
         return not self._click_through and self._input_region.contains(point)
 
     def update_position(self, x: int, y: int):
-        self.move(int(x), int(y))
+        target = QPoint(int(x), int(y))
+        if self.pos() != target:
+            self.move(target)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -314,6 +453,7 @@ class TransparentOverlay(QWidget):
             jitter_x = random.randint(-5, 5)
 
             # Spider-Verse chromatic aberration & horizontal slice displacement
+            baseline_offset = int(h * (512 - 480) / 512.0) if not getattr(self, '_is_inverted', False) else 0
             num_slices = 5
             slice_h = max(1, h // num_slices)
             for i in range(num_slices):
@@ -322,13 +462,13 @@ class TransparentOverlay(QWidget):
                 sx_offset = random.choice([-8, -5, -2, 0, 3, 6, 8]) + jitter_x
                 # Cyan/Blue shift pass (chromatic aberration - left)
                 painter.setOpacity(0.6 * flicker_opacity)
-                painter.drawPixmap(sx_offset - 6, sy, self._rendered, 0, sy, w, sh)
+                painter.drawPixmap(sx_offset - 6, sy + baseline_offset, self._rendered, 0, sy, w, sh)
                 # Red/Magenta shift pass (chromatic aberration - right)
                 painter.setOpacity(0.6 * flicker_opacity)
-                painter.drawPixmap(sx_offset + 6, sy, self._rendered, 0, sy, w, sh)
+                painter.drawPixmap(sx_offset + 6, sy + baseline_offset, self._rendered, 0, sy, w, sh)
                 # Main sprite slice
                 painter.setOpacity(flicker_opacity)
-                painter.drawPixmap(sx_offset, sy, self._rendered, 0, sy, w, sh)
+                painter.drawPixmap(sx_offset, sy + baseline_offset, self._rendered, 0, sy, w, sh)
 
             # Digital glitch artifact blocks (Spider-Verse neon flicker)
             for _ in range(random.randint(3, 6)):
@@ -346,7 +486,77 @@ class TransparentOverlay(QWidget):
 
             painter.setOpacity(1.0)
         else:
-            painter.drawPixmap(0, 0, self._rendered)
+            bob_y = 0.0
+            bob_rot = 0.0
+            if self._is_music_playing:
+                bob_y = math.sin(self._beat_phase * math.pi) * 4.5 * max(0.6, self._beat_intensity)
+                bob_rot = math.sin(self._beat_phase * math.pi * 2.0) * 2.2 * max(0.6, self._beat_intensity)
+
+            jitter_x = 0.0
+            jitter_y = 0.0
+            if self._is_heavy_load and not self._reading:
+                import time
+                now = time.monotonic()
+                jitter_x = math.sin(now * 52.0) * 1.8
+                jitter_y = math.cos(now * 60.0) * 1.4
+
+            painter.save()
+            w, h = self.width(), self.height()
+            if self._is_music_playing:
+                cx = w / 2.0
+                cy = float(h)
+                painter.translate(cx, cy)
+                painter.rotate(bob_rot)
+                painter.translate(-cx, -cy + bob_y)
+            elif self._is_heavy_load and not self._reading:
+                painter.translate(jitter_x, jitter_y)
+
+            baseline_offset = int(h * (512 - 480) / 512.0) if not getattr(self, '_is_inverted', False) else 0
+            painter.drawPixmap(0, baseline_offset, self._rendered)
+
+            # Draw Red-and-Black Over-Ear Headphones & Sneaker Tap if music is playing
+            if self._is_music_playing:
+                head_cx = w / 2.0
+
+                # 2. Sneaker Tap Animation at the feet level
+                if self._foot_tap_phase > 0.05:
+                    foot_y = h - 10.0
+                    fx = head_cx + w * 0.18
+                    lift = math.sin(self._foot_tap_phase * math.pi) * 4.5
+                    alpha_tap = int(240 * self._foot_tap_phase)
+
+                    # Comic tap sound shockwave arc
+                    painter.setPen(QPen(QColor(0, 229, 255, alpha_tap), 1.8))
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawArc(QRectF(fx - 12, foot_y - 2, 24, 8), int(0), int(180 * 16))
+
+                    # Comic "TAP!" caption popping up
+                    font_tap = QFont("Arial Black", 8)
+                    font_tap.setBold(True)
+                    painter.setFont(font_tap)
+                    painter.setPen(QColor(15, 23, 42, alpha_tap))
+                    painter.drawText(QPointF(fx + 10, foot_y - lift), "TAP!")
+                    painter.setPen(QColor(255, 235, 0, alpha_tap))
+                    painter.drawText(QPointF(fx + 9, foot_y - lift - 1), "TAP!")
+
+            # Draw straining sweat droplets and tension lines if heavy load is active
+            if self._is_heavy_load and not self._reading:
+                head_cx = w / 2.0
+                head_cy = h * 0.28
+                sweat_pen = QPen(QColor("#0284C7"), 1.5)
+                sweat_brush = QColor("#38BDF8")
+                painter.setPen(sweat_pen)
+                painter.setBrush(sweat_brush)
+                painter.drawEllipse(QPointF(head_cx - w * 0.14, head_cy - 4), 3.5, 5.0)
+                painter.fillRect(QRectF(head_cx - w * 0.14 - 1, head_cy - 5, 1.2, 1.5), QColor("#FFFFFF"))
+                painter.drawEllipse(QPointF(head_cx + w * 0.16, head_cy + 8), 3.0, 4.5)
+                painter.fillRect(QRectF(head_cx + w * 0.16 - 1, head_cy + 7, 1.2, 1.5), QColor("#FFFFFF"))
+
+                painter.setPen(QPen(QColor(255, 255, 255, 200), 1.5))
+                painter.drawLine(int(head_cx - w * 0.12), int(head_cy - 12), int(head_cx - w * 0.04), int(head_cy - 8))
+                painter.drawLine(int(head_cx + w * 0.12), int(head_cy - 12), int(head_cx + w * 0.04), int(head_cy - 8))
+
+            painter.restore()
 
         # If Spider-Sense is active, draw subtle golden/crimson tingle aura on character mask
         if self._spider_sense_active:
@@ -392,6 +602,10 @@ class TransparentOverlay(QWidget):
             # Tear/sweat drop 2
             painter.drawEllipse(drop_x + 6, drop_y + 9, 4, 6)
 
+        # If charging, draw character-specific bio-electricity or Stark Tech HUD effects
+        if self._is_charging:
+            self._paint_charging_effects(painter)
+
         painter.end()
 
     def showEvent(self, event):
@@ -418,6 +632,8 @@ class TransparentOverlay(QWidget):
     def nativeEvent(self, event_type, message):
         if sys.platform == 'win32':
             msg = wintypes.MSG.from_address(int(message))
+            if msg.message == 0x0014:  # WM_ERASEBKGND: prevent GDI background wipe flickering
+                return True, 1
             if msg.message == 0x0021:  # WM_MOUSEACTIVATE / MA_NOACTIVATE
                 return True, 3
             if msg.message == 0x0084:  # WM_NCHITTEST: physical screen coordinates
@@ -489,6 +705,14 @@ class TransparentOverlay(QWidget):
             event.accept()
         else:
             event.ignore()
+
+    def keyPressEvent(self, event):
+        text = event.text()
+        if text in ("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"):
+            self.key_pressed.emit(text)
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def _cancel_gesture(self):
         self._click_timer.stop()

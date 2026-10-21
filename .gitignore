@@ -1,0 +1,10 @@
+@"
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+*.log
+tests_temp/
+.pytest_cache/
+"@ | Out-File -Encoding utf8 .gitignore
