@@ -283,17 +283,16 @@ class WebMainWindow(QMainWindow):
         self.web_server.get_app_settings = self._get_app_settings
         self.web_port = self.web_server.start()
 
-        # 2. Initialize QWebEngineView
+        # 2. Initialize QWebEngineView with native opaque paint event (no QWidget stylesheet interference)
+        self.setAttribute(Qt.WA_OpaquePaintEvent, True)
         self.web_view = QWebEngineView(self)
+        self.web_view.setAttribute(Qt.WA_OpaquePaintEvent, True)
         self.web_view.page().setBackgroundColor(QColor("#06080d"))
         settings = self.web_view.settings()
         settings.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         settings.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
         settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
-        settings.setAttribute(QWebEngineSettings.ScrollAnimatorEnabled, True)
-
-        # Black background for view
-        self.web_view.setStyleSheet("background-color: #060912;")
+        settings.setAttribute(QWebEngineSettings.ScrollAnimatorEnabled, False)
 
         # Block Ctrl +/-/0 zooming in Qt
         self._zoom_blocker = ZoomBlocker(self)
@@ -1221,7 +1220,7 @@ class WebMainWindow(QMainWindow):
         now = time.monotonic()
         if self._last_preview_bytes and (
             not self.isVisible() or self.isMinimized() or self._dashboard_tab != "Home"
-            or now - getattr(self, "_last_preview_at", 0.0) < 0.25
+            or now - getattr(self, "_last_preview_at", 0.0) < 1.0
         ):
             return
         self._last_preview_at = now

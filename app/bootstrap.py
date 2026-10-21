@@ -105,15 +105,12 @@ def bootstrap_environment() -> None:
     # Preserve fractional scale factors such as 125%, 150% and 175%.
     os.environ.setdefault("QT_SCALE_FACTOR_ROUNDING_POLICY", "PassThrough")
 
-    # Prevent Chromium from flickering/throttling when transparent companion overlays hover or update
+    # Configure Chromium for seamless DWM DirectComposition presentation without cursor or frame flicker
     existing_flags = os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", "")
     flags_to_add = (
-        "--disable-direct-composition "
-        "--disable-direct-composition-video-overlays "
         "--use-angle=d3d11 "
-        "--enable-begin-frame-scheduling "
         "--disable-features=CalculateNativeWinOcclusion,WindowOcclusionCalculation,MrcMultiplaneOverlay "
         "--disable-backgrounding-occluded-windows"
     )
-    if "--disable-direct-composition" not in existing_flags:
+    if "--use-angle=d3d11" not in existing_flags:
         os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = f"{existing_flags} {flags_to_add}".strip()
