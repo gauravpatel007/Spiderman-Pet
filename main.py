@@ -5,6 +5,7 @@ Native Interactive Desktop Companion for Windows
 Entry point script.
 """
 import sys
+import PySide6
 import os
 
 # Ensure package roots and dependencies are discoverable

@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QSizePolicy,
     QScrollArea,
+    QProgressBar,
 )
 
 from core.character_manager import CharacterManager, CharacterProfile
@@ -38,13 +39,15 @@ from services.character_import import create_character
 class ImportWorker(QThread):
     succeeded = Signal(str)
     failed = Signal(str)
+    progress = Signal(int, str)
 
-    def __init__(self, arguments, parent):
+    def __init__(self, arguments, parent=None):
         super().__init__(parent)
         self.arguments = arguments
 
     def run(self):
         try:
+            self.arguments["progress_callback"] = lambda pct, msg: self.progress.emit(pct, msg)
             result = create_character(**self.arguments)
             self.succeeded.emit(result.name)
         except Exception as exc:
@@ -204,24 +207,31 @@ class AddCharacterCard(QFrame):
 
 
 class AddCharacterDialog(QDialog):
-    """Modal dialog allowing users to create or import a new character."""
+    """Modal dialog allowing users to create or import a new character with Apple design system."""
 
-    def __init__(self, character_mgr: CharacterManager, parent: Optional[QWidget] = None):
+    def __init__(self, character_mgr: Optional[CharacterManager] = None, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.character_mgr = character_mgr
-        self.setWindowTitle("Add New Character — Spider-Buddy")
-        self.setMinimumWidth(440)
+        self.character_mgr = character_mgr or CharacterManager()
+        self.setWindowTitle("Add New Companion — Spider-Buddy")
+        self.setMinimumWidth(480)
         self.setModal(True)
+        self.setWindowFlags(self.windowFlags() | Qt.Dialog | Qt.WindowStaysOnTopHint)
         self.init_ui()
+        self.apply_apple_theme()
 
     def init_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(14)
 
-        title = QLabel("Add New Spider-Man Character")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #E50914;")
+        title = QLabel("Add New Companion")
+        title.setObjectName("dialogTitle")
         layout.addWidget(title)
+
+        subtitle = QLabel("Create a new Spider-Man companion by cloning an existing template or importing custom artwork.")
+        subtitle.setWordWrap(True)
+        subtitle.setObjectName("dialogSubtitle")
+        layout.addWidget(subtitle)
 
         form = QFormLayout()
         form.setSpacing(12)
@@ -231,51 +241,152 @@ class AddCharacterDialog(QDialog):
         form.addRow("Character Name:", self.name_edit)
 
         self.id_edit = QLineEdit()
-        self.id_edit.setPlaceholderText("e.g. spider_gwen (letters and underscores)")
+        self.id_edit.setPlaceholderText("e.g. spider_gwen (letters, numbers, underscores)")
         form.addRow("Identifier (ID):", self.id_edit)
 
         self.suit_edit = QLineEdit()
         self.suit_edit.setPlaceholderText("e.g. Ghost-Spider Hooded Suit")
-        form.addRow("Suit Name:", self.suit_edit)
+        form.addRow("Suit Description:", self.suit_edit)
 
+        # Dynamic template selector from available characters
         self.template_combo = QComboBox()
-        self.template_combo.addItem("Based on Miles Morales (Playful & Agile)", "miles_morales")
-        self.template_combo.addItem("Based on Tom Holland (Acrobatic & Web-Heavy)", "tom_holland")
+        avail = getattr(self.character_mgr, "available_characters", {})
+        if avail:
+            for cid, prof in avail.items():
+                self.template_combo.addItem(f"{prof.display_name} ({prof.suit})", cid)
+        else:
+            self.template_combo.addItem("Miles Morales (Classic Black & Red)", "miles_morales")
+            self.template_combo.addItem("Tom Holland (Integrated Stark Suit)", "tom_holland")
         form.addRow("Base Template:", self.template_combo)
 
-        # Optional custom preview image
+        # Optional artwork
         img_row = QHBoxLayout()
         self.img_edit = QLineEdit()
-        self.img_edit.setPlaceholderText("Optional full-body artwork; transparent PNG works best")
+        self.img_edit.setPlaceholderText("Optional full-body artwork (.png/.webp)")
         browse_btn = QPushButton("Browse...")
         browse_btn.clicked.connect(self._browse_image)
         img_row.addWidget(self.img_edit)
         img_row.addWidget(browse_btn)
-        form.addRow("Character artwork:", img_row)
+        form.addRow("Custom Artwork:", img_row)
 
         layout.addLayout(form)
-        self.import_note = QLabel('Artwork imports get local cutout animations for all template activities. '
-                                 'A single image cannot reproduce hand-authored poses. Leave artwork empty to duplicate the template.')
-        self.import_note.setWordWrap(True)
-        layout.addWidget(self.import_note)
 
-        # Auto-fill ID when typing name
+        note = QLabel("Tip: If artwork is left empty, the base template character is cloned instantly.")
+        note.setStyleSheet("font-size: 11px; color: #71717a; margin-top: 2px;")
+        note.setWordWrap(True)
+        layout.addWidget(note)
+
+        # Progress bar container (active during generation)
+        self.progress_container = QWidget()
+        prog_layout = QVBoxLayout(self.progress_container)
+        prog_layout.setContentsMargins(0, 4, 0, 0)
+        self.progress_label = QLabel("Building companion animations...")
+        self.progress_label.setStyleSheet("font-size: 11.5px; color: #a1a1aa;")
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(True)
+        prog_layout.addWidget(self.progress_label)
+        prog_layout.addWidget(self.progress_bar)
+        self.progress_container.setVisible(False)
+        layout.addWidget(self.progress_container)
+
         self.name_edit.textChanged.connect(self._auto_fill_id)
 
-        # Buttons
+        # Action Buttons
         btn_row = QHBoxLayout()
         btn_row.addStretch()
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
-        btn_row.addWidget(cancel_btn)
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.reject)
+        btn_row.addWidget(self.cancel_btn)
 
-        create_btn = QPushButton("Create Character")
-        self.create_btn = create_btn
-        create_btn.setStyleSheet("background: #E50914; color: white; font-weight: bold; padding: 8px 18px;")
-        create_btn.clicked.connect(self._create_character)
-        btn_row.addWidget(create_btn)
+        self.create_btn = QPushButton("Create Character")
+        self.create_btn.setObjectName("createBtn")
+        self.create_btn.setDefault(True)
+        self.create_btn.clicked.connect(self._create_character)
+        btn_row.addWidget(self.create_btn)
 
         layout.addLayout(btn_row)
+
+    def apply_apple_theme(self):
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #0b0f19;
+                color: #f1f5f9;
+                font-family: -apple-system, "SF Pro Display", "Segoe UI", sans-serif;
+            }
+            QLabel#dialogTitle {
+                font-size: 19px;
+                font-weight: 700;
+                color: #FF2D55;
+            }
+            QLabel#dialogSubtitle {
+                font-size: 12px;
+                color: #94a3b8;
+                margin-bottom: 4px;
+            }
+            QLabel {
+                font-size: 12.5px;
+                color: #e2e8f0;
+                font-weight: 500;
+            }
+            QLineEdit, QComboBox {
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                border-radius: 8px;
+                padding: 7px 12px;
+                color: #ffffff;
+                font-size: 12.5px;
+            }
+            QLineEdit:focus, QComboBox:focus {
+                border-color: #FF2D55;
+                background: rgba(255, 45, 85, 0.05);
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 24px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #121727;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: #ffffff;
+                selection-background-color: #FF2D55;
+            }
+            QPushButton {
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: #f1f5f9;
+                padding: 8px 18px;
+                border-radius: 9999px;
+                font-weight: 600;
+                font-size: 12.5px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.14);
+            }
+            QPushButton#createBtn {
+                background: #FF2D55;
+                border: none;
+                color: #ffffff;
+            }
+            QPushButton#createBtn:hover {
+                background: #ff4569;
+            }
+            QProgressBar {
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 6px;
+                height: 14px;
+                text-align: center;
+                color: #ffffff;
+                font-size: 10px;
+                font-weight: bold;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF2D55, stop:1 #ff6482);
+                border-radius: 5px;
+            }
+        """)
 
     def _auto_fill_id(self, text: str) -> None:
         if not self.id_edit.isModified():
@@ -305,21 +416,45 @@ class AddCharacterDialog(QDialog):
             QMessageBox.warning(self, "Invalid ID", "Identifier must only contain lowercase letters, numbers, and underscores.")
             return
 
-        if cid in self.character_mgr.available_characters:
+        avail = getattr(self.character_mgr, "available_characters", {})
+        if cid in avail:
             QMessageBox.warning(self, "Character Exists", f"A character with ID '{cid}' already exists.")
             return
 
         if custom_img and not Path(custom_img).is_file():
             QMessageBox.warning(self, 'Artwork not found', 'Select an existing image file.')
             return
+
+        template_profile = avail.get(template_id)
+        if not template_profile:
+            for prof in avail.values():
+                template_profile = prof
+                break
+
+        if not template_profile or not hasattr(template_profile, 'root_path') or not template_profile.root_path.exists():
+            QMessageBox.warning(self, "Template Error", "No valid base template character could be found.")
+            return
+
         self.create_btn.setEnabled(False)
-        self.create_btn.setText('Building animations…')
-        self.worker = ImportWorker(dict(destination_root=self.character_mgr.characters_root,
-            template_root=self.character_mgr.available_characters[template_id].root_path,
-            cid=cid, name=name, suit=suit, artwork=custom_img or None), self)
+        self.cancel_btn.setEnabled(False)
+        self.progress_container.setVisible(True)
+        self.progress_bar.setValue(5)
+        self.progress_label.setText("Starting character creation...")
+
+        dest_root = getattr(self.character_mgr, 'characters_root', Path('characters'))
+        self.worker = ImportWorker(dict(
+            destination_root=dest_root,
+            template_root=template_profile.root_path,
+            cid=cid, name=name, suit=suit, artwork=custom_img or None
+        ), self)
+        self.worker.progress.connect(self._on_progress)
         self.worker.succeeded.connect(self._import_succeeded)
         self.worker.failed.connect(self._import_failed)
         self.worker.start()
+
+    def _on_progress(self, pct: int, msg: str):
+        self.progress_bar.setValue(pct)
+        self.progress_label.setText(msg)
 
     def _import_succeeded(self, cid):
         self.worker.wait()
@@ -329,7 +464,8 @@ class AddCharacterDialog(QDialog):
     def _import_failed(self, message):
         self.worker.wait()
         self.create_btn.setEnabled(True)
-        self.create_btn.setText('Create Character')
+        self.cancel_btn.setEnabled(True)
+        self.progress_container.setVisible(False)
         QMessageBox.warning(self, 'Could not import character', message)
 
     def reject(self):

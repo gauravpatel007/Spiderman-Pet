@@ -1096,6 +1096,20 @@
         "animations/dragged/frame_23.png"
       ],
       "source": "rig/rig.json"
+    },
+    "title_perch": {
+      "fps": 12,
+      "loop": true,
+      "direction": "right",
+      "mirror_allowed": false,
+      "anchor": [
+        256,
+        488
+      ],
+      "frames": [
+        "animations/perch/frame_00.png"
+      ],
+      "source": "animations/perch/frame_00.png"
     }
   }
 }

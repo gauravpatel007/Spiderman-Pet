@@ -8,6 +8,7 @@ from .web_overlay import WebOverlay
 from .comic_effects_overlay import ComicEffectsOverlay
 from .corner_web_overlay import CornerWebOverlay
 from .trampoline_overlay import TrampolineOverlay
+from .sticky_note_overlay import StickyNotesManager
 from .boundary_controller import BoundaryController
 from .monitor_manager import MonitorManager
 from .window_detector import WindowDetector
@@ -32,6 +33,7 @@ class OverlayManager(QObject):
         self.comic_overlay=ComicEffectsOverlay(self.overlay, movement)
         self.corner_web_overlay=CornerWebOverlay()
         self.trampoline_overlay=TrampolineOverlay()
+        self.sticky_notes_mgr=StickyNotesManager(self.overlay)
         self.overlay.set_comic_effects(self.comic_overlay)
         movement.set_active_trampoline(self.trampoline_overlay)
         self.trampoline_overlay.trampoline_dissolved.connect(movement.clear_trampoline)

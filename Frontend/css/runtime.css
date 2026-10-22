@@ -1,0 +1,1287 @@
+/* Theme values share the existing dashboard materials and crimson accent. */
+:root[data-theme="midnight"] {
+  --apple-canvas: #000;
+  --apple-sidebar-bg: #08090c;
+  --apple-toolbar-bg: #08090c;
+  --apple-card-bg: #101116;
+  --apple-well-bg: #050608;
+}
+:root[data-theme="light"] {
+  --apple-canvas: #f5f5f7;
+  --apple-canvas-gradient: linear-gradient(180deg, #f8f9fa 0%, #edf0f5 100%);
+  --apple-sidebar-bg: #ffffff;
+  --apple-toolbar-bg: #ffffff;
+  --apple-card-bg: #ffffff;
+  --apple-card-hover: #ffffff;
+  --apple-well-bg: #f4f6fa;
+  --apple-well-hover: #ebf0f7;
+  --apple-border: rgba(0, 0, 0, 0.07);
+  --apple-border-top: rgba(255, 255, 255, 0.95);
+  --apple-border-strong: rgba(0, 0, 0, 0.14);
+  --apple-border-subtle: rgba(0, 0, 0, 0.04);
+  --apple-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --apple-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --apple-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --apple-text-primary: #1d1d1f;
+  --apple-text-secondary: #48484a;
+  --apple-text-tertiary: #86868b;
+  --apple-text-quaternary: #aeaeb2;
+  --apple-blue: #007aff;
+  --apple-green: #34c759;
+  --apple-amber: #ff9500;
+  --apple-purple: #af52de;
+  --apple-teal: #00a299;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   APPLE DESIGN SYSTEM — LIGHT THEME SPECIFICATION (macOS Sonoma / iOS 18)
+   Applied strictly under html[data-theme="light"] without touching dark theme.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Canvas & Global Surfaces ── */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background: var(--apple-canvas) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Dashboard background"] {
+  background: var(--apple-canvas-gradient) !important;
+}
+
+html[data-theme="light"] [data-framer-background-image-wrapper="true"] {
+  opacity: 0.025 !important;
+  filter: grayscale(1) invert(1) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Dashboard content"] {
+  background: transparent !important;
+}
+
+/* Typography Hierarchy */
+html[data-theme="light"] :is(h1, h2, h3, h4, h5, h6, .apple-title, .apple-card-title) {
+  color: var(--apple-text-primary) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+}
+
+html[data-theme="light"] .apple-title-accent {
+  background: linear-gradient(135deg, #FF2D55 0%, #EA1844 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: var(--apple-crimson) !important;
+}
+
+html[data-theme="light"] :is(.apple-subtext, .settings-row-desc) {
+  color: var(--apple-text-secondary) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+}
+
+html[data-theme="light"] :is(label, span:not(.apple-pill-badge):not(.apple-action-dot):not(.apple-title-accent):not([class*="tag-"]):not([class*="badge-"])) {
+  color: inherit;
+}
+
+/* ── Top Bar (macOS Safari / Settings Navigation Bar) ── */
+html[data-theme="light"] [data-framer-name="Toolbar"],
+html[data-theme="light"] .framer-1jtgivx {
+  background: #ffffff !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Search field"],
+html[data-theme="light"] #spider-search-field,
+html[data-theme="light"] .framer-t0v0ag {
+  background: rgba(0, 0, 0, 0.038) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Search field"]:hover,
+html[data-theme="light"] #spider-search-field:hover {
+  background: rgba(0, 0, 0, 0.055) !important;
+  border-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Search field"]:focus-within,
+html[data-theme="light"] #spider-search-field:focus-within {
+  background: #ffffff !important;
+  border-color: var(--apple-crimson) !important;
+  box-shadow: 0 0 0 3px rgba(255, 45, 85, 0.14) !important;
+}
+
+html[data-theme="light"] #spider-search-input {
+  color: var(--apple-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+html[data-theme="light"] #spider-search-input::placeholder {
+  color: var(--apple-text-tertiary) !important;
+}
+
+html[data-theme="light"] #spider-search-field svg,
+html[data-theme="light"] .spider-search-icon {
+  color: var(--apple-text-tertiary) !important;
+  stroke: var(--apple-text-tertiary) !important;
+}
+
+html[data-theme="light"] .spider-search-badge {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: var(--apple-text-secondary) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-theme="light"] .spider-search-mic-btn {
+  background: rgba(255, 45, 85, 0.08) !important;
+  border: 1px solid rgba(255, 45, 85, 0.2) !important;
+  color: var(--apple-crimson) !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-theme="light"] .spider-search-mic-btn:hover {
+  background: var(--apple-crimson) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(255, 45, 85, 0.3) !important;
+}
+
+/* Companion Status Capsule */
+html[data-theme="light"] #spider-status-capsule,
+html[data-theme="light"] .framer-1c1qog8 {
+  background: rgba(52, 199, 89, 0.1) !important;
+  border: 1px solid rgba(52, 199, 89, 0.28) !important;
+  box-shadow: 0 1px 3px rgba(52, 199, 89, 0.08) !important;
+  border-radius: 9999px !important;
+}
+
+html[data-theme="light"] #spider-status-capsule:hover,
+html[data-theme="light"] .framer-1c1qog8:hover {
+  background: rgba(52, 199, 89, 0.15) !important;
+  border-color: rgba(52, 199, 89, 0.45) !important;
+}
+
+html[data-theme="light"] #spider-status-capsule p,
+html[data-theme="light"] .framer-1c1qog8 p {
+  color: #248a3d !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="light"] .framer-6e54ha {
+  background: #34c759 !important;
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.7) !important;
+}
+
+/* Search Dropdown */
+html[data-theme="light"] #spider-search-dropdown {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 14px !important;
+}
+
+html[data-theme="light"] .spider-search-result-item {
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .spider-search-result-item:hover {
+  background: rgba(0, 0, 0, 0.045) !important;
+}
+
+html[data-theme="light"] .spider-search-result-item.active {
+  background: rgba(255, 45, 85, 0.08) !important;
+  border-color: rgba(255, 45, 85, 0.25) !important;
+}
+
+/* ── Sidebar (macOS Source List) ── */
+html[data-theme="light"] [data-framer-name="Sidebar"],
+html[data-theme="light"] .framer-vex8ir {
+  background: #ffffff !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Sidebar Brand Header */
+html[data-theme="light"] [data-framer-name="Brand"],
+html[data-theme="light"] .apple-brand-header {
+  background: #f4f6fa !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 14px !important;
+}
+
+html[data-theme="light"] .apple-brand-title {
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .apple-brand-subtitle {
+  color: var(--apple-text-secondary) !important;
+}
+
+/* Navigation items */
+html[data-theme="light"] [data-framer-name="Main navigation"] > div {
+  color: var(--apple-text-secondary) !important;
+  font-weight: 500 !important;
+  border-radius: 12px !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Main navigation"] > div:hover {
+  background: rgba(0, 0, 0, 0.045) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Main navigation"] > div svg {
+  stroke: var(--apple-text-secondary) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Main navigation"] > div:hover svg {
+  stroke: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .nav-active,
+html[data-theme="light"] [data-framer-name="Main navigation"] > div.nav-active {
+  background: linear-gradient(135deg, #FF2D55 0%, #EA1844 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(255, 45, 85, 0.28) !important;
+  border-radius: 12px !important;
+}
+
+html[data-theme="light"] .nav-active p,
+html[data-theme="light"] .nav-active span {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="light"] .nav-active svg {
+  stroke: #ffffff !important;
+}
+
+/* Current Companion Card in Sidebar */
+html[data-theme="light"] [data-framer-name="Current companion"],
+html[data-theme="light"] .framer-15s0sic {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Current companion"] p,
+html[data-theme="light"] .framer-15s0sic p {
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .framer-1f1i94f {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] .framer-1f1i94f:hover {
+  background: #f4f6fa !important;
+  border-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+html[data-theme="light"] .framer-1f1i94f p {
+  color: var(--apple-text-primary) !important;
+  font-weight: 550 !important;
+}
+
+/* Sidebar Footer & Utilities */
+html[data-theme="light"] .sidebar-footer-card,
+html[data-theme="light"] [data-framer-name="Sidebar Footer"] {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] .sidebar-footer-status {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-radius: 10px !important;
+}
+
+html[data-theme="light"] .sidebar-footer-status p {
+  color: var(--apple-text-secondary) !important;
+}
+
+html[data-theme="light"] .sidebar-footer-btn {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-radius: 10px !important;
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .sidebar-footer-btn:hover {
+  background: #f0f3f8 !important;
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+html[data-theme="light"] .sidebar-footer-btn p,
+html[data-theme="light"] .sidebar-footer-btn span {
+  color: var(--apple-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+html[data-theme="light"] .sidebar-footer-icon {
+  color: var(--apple-text-secondary) !important;
+  stroke: var(--apple-text-secondary) !important;
+}
+
+html[data-theme="light"] .sidebar-profile-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: var(--apple-shadow-sm) !important;
+  border-radius: 14px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-theme="light"] .sidebar-profile-card:hover {
+  background: #fafafc !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+html[data-theme="light"] .sidebar-profile-name {
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .sidebar-profile-subtitle {
+  color: var(--apple-text-secondary) !important;
+}
+
+/* ── Apple Glass Cards (Main Workspace) ── */
+html[data-theme="light"] :is(.apple-glass-card, .apple-glass-panel, .settings-group, [data-framer-name="Your companion"], [data-framer-name="Work with your companion"], [data-framer-name="A little action"], [data-framer-name="System status"], [data-framer-name="Today with your companion"]) {
+  background: var(--apple-card-bg) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03), 0 8px 24px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 20px !important;
+}
+
+html[data-theme="light"] :is(.apple-glass-card, [data-framer-name="Your companion"], [data-framer-name="Work with your companion"], [data-framer-name="A little action"], [data-framer-name="System status"], [data-framer-name="Today with your companion"]):hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Home Tab - Card 1: Your Companion & Hero area */
+html[data-theme="light"] .framer-1a61nps,
+html[data-theme="light"] [data-framer-name="Quote bubble"] {
+  background: #f4f6fa !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-left: 3.5px solid var(--apple-crimson) !important;
+  border-radius: 12px !important;
+}
+
+html[data-theme="light"] .framer-1a61nps p,
+html[data-theme="light"] [data-framer-name="Quote bubble"] p {
+  color: #2c2c2e !important;
+  font-style: italic !important;
+}
+
+html[data-theme="light"] [data-framer-name="Character illustration area"] {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 45, 85, 0.06) 0%, rgba(244, 246, 250, 0.98) 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Status pill"] {
+  background: rgba(29, 29, 31, 0.82) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(6px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Actions list"] > div,
+html[data-theme="light"] .framer-t6966f > div {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Actions list"] > div:hover,
+html[data-theme="light"] .framer-t6966f > div:hover {
+  background: #f4f6fa !important;
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+html[data-theme="light"] [data-framer-name="Actions list"] p,
+html[data-theme="light"] .framer-t6966f p {
+  color: var(--apple-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+/* Home Tab - Card 2: Work with your companion */
+html[data-theme="light"] [data-framer-name="Timer ring"],
+html[data-theme="light"] .framer-1h0p61s {
+  background: #ffffff !important;
+  border: 4px solid var(--apple-crimson) !important;
+  box-shadow: 0 4px 18px rgba(255, 45, 85, 0.18), inset 0 0 12px rgba(255, 45, 85, 0.04) !important;
+}
+
+html[data-theme="light"] .framer-hmo7gg p {
+  color: #1d1d1f !important;
+}
+
+html[data-theme="light"] .framer-15rpafq p {
+  color: #86868b !important;
+}
+
+html[data-theme="light"] [data-framer-name="Focus status"],
+html[data-theme="light"] .framer-0I29B .framer-1519gdx,
+html[data-theme="light"] .framer-1519gdx {
+  background: #f4f6fa !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 14px !important;
+}
+
+html[data-theme="light"] .framer-1m18unj p {
+  color: var(--apple-blue) !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="light"] .framer-188w31n p {
+  color: var(--apple-text-secondary) !important;
+}
+
+html[data-theme="light"] [data-framer-name="5m Break"],
+html[data-theme="light"] [data-framer-name="Reset"],
+html[data-theme="light"] .framer-wdmlyn,
+html[data-theme="light"] .framer-1iorjio {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] [data-framer-name="5m Break"]:hover,
+html[data-theme="light"] [data-framer-name="Reset"]:hover {
+  background: #f4f6fa !important;
+}
+
+html[data-theme="light"] [data-framer-name="5m Break"] p,
+html[data-theme="light"] [data-framer-name="Reset"] p {
+  color: var(--apple-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+/* Home Tab - Card 3: Action Triggers (Control Center Style) */
+html[data-theme="light"] .apple-trigger-tile,
+html[data-theme="light"] .framer-0I29B .framer-1bjpam1 > div {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-theme="light"] .apple-trigger-tile:hover,
+html[data-theme="light"] .framer-0I29B .framer-1bjpam1 > div:hover {
+  background: #fafafc !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-2px) !important;
+}
+
+html[data-theme="light"] .apple-tile-title,
+html[data-theme="light"] .framer-0I29B .framer-1bjpam1 p {
+  color: var(--apple-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="light"] .apple-tile-desc {
+  color: var(--apple-text-tertiary) !important;
+}
+
+/* Home Tab - Card 4: System Status */
+html[data-theme="light"] .apple-status-pod,
+html[data-theme="light"] .framer-0I29B .framer-1dz2z32,
+html[data-theme="light"] .framer-0I29B .framer-gwze7g {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-theme="light"] .apple-pod-label,
+html[data-theme="light"] .framer-0I29B .framer-9yzk0w p,
+html[data-theme="light"] .framer-0I29B .framer-1xgtx0n p {
+  color: var(--apple-text-tertiary) !important;
+  font-weight: 700 !important;
+}
+
+html[data-theme="light"] .apple-pod-hero p,
+html[data-theme="light"] .apple-hw-val {
+  color: var(--apple-text-primary) !important;
+  font-weight: 700 !important;
+}
+
+html[data-theme="light"] .apple-track-bg,
+html[data-theme="light"] .apple-hw-track {
+  background: #e9edf5 !important;
+}
+
+html[data-theme="light"] .apple-pod-card-well,
+html[data-theme="light"] .apple-suit-well {
+  background: #f4f6fa !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 10px !important;
+}
+
+html[data-theme="light"] .apple-well-eyebrow,
+html[data-theme="light"] .apple-suit-lore-label,
+html[data-theme="light"] .framer-0I29B .framer-wla9dd p {
+  color: var(--apple-text-tertiary) !important;
+}
+
+html[data-theme="light"] .apple-well-primary,
+html[data-theme="light"] .apple-suit-name,
+html[data-theme="light"] .framer-0I29B .framer-16hyfq4 p {
+  color: var(--apple-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="light"] .apple-well-status,
+html[data-theme="light"] .apple-suit-status,
+html[data-theme="light"] .framer-0I29B .framer-1hn0my1 p {
+  color: var(--apple-blue) !important;
+}
+
+/* Home Tab - Card 5: Today with your companion (Daily Metrics) */
+html[data-theme="light"] .framer-1flz5lv,
+html[data-theme="light"] .framer-0I29B .framer-1flz5lv,
+html[data-theme="light"] [data-framer-name="Daily statistics"] {
+  background: #f4f6fa !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 16px !important;
+  padding: 12px !important;
+}
+
+html[data-theme="light"] .framer-1lyddmv,
+html[data-theme="light"] .framer-1gf49dd,
+html[data-theme="light"] .framer-1dmaejb,
+html[data-theme="light"] .framer-0I29B .framer-1lyddmv,
+html[data-theme="light"] .framer-0I29B .framer-1gf49dd,
+html[data-theme="light"] .framer-0I29B .framer-1dmaejb {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] :is(.framer-1lyddmv, .framer-1gf49dd, .framer-1dmaejb) p {
+  color: var(--apple-text-secondary) !important;
+}
+
+html[data-theme="light"] :is(.framer-1ndz97i, .framer-10kb0sf, .framer-d24xeg) p {
+  color: var(--apple-text-primary) !important;
+  font-weight: 700 !important;
+}
+
+html[data-theme="light"] :is(.framer-15zva39, .framer-1vy8ptv, .framer-16k4zsz) {
+  color: var(--apple-crimson) !important;
+  fill: var(--apple-crimson) !important;
+}
+
+/* ── Interactive Controls (Apple Switches, Sliders, Buttons) ── */
+html[data-theme="light"] .spider-slider {
+  background-color: #e9e9ea !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-theme="light"] .spider-slider:before {
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .spider-switch input:checked + .spider-slider {
+  background: linear-gradient(135deg, #FF2D55 0%, #EA1844 100%) !important;
+  border-color: rgba(255, 45, 85, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(255, 45, 85, 0.28) !important;
+}
+
+html[data-theme="light"] input[type="range"] {
+  background: #e5e8ef !important;
+}
+
+html[data-theme="light"] input[type="range"]::-webkit-slider-thumb {
+  background: #ffffff !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] input[type="text"],
+html[data-theme="light"] input[type="search"],
+html[data-theme="light"] textarea,
+html[data-theme="light"] .apple-search-box {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: var(--apple-text-primary) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-theme="light"] input[type="text"]::placeholder,
+html[data-theme="light"] input[type="search"]::placeholder,
+html[data-theme="light"] textarea::placeholder,
+html[data-theme="light"] .apple-search-box::placeholder {
+  color: var(--apple-text-tertiary) !important;
+}
+
+html[data-theme="light"] input[type="text"]:focus,
+html[data-theme="light"] input[type="search"]:focus,
+html[data-theme="light"] textarea:focus,
+html[data-theme="light"] .apple-search-box:focus {
+  border-color: var(--apple-crimson) !important;
+  box-shadow: 0 0 0 3px rgba(255, 45, 85, 0.12) !important;
+}
+
+html[data-theme="light"] .apple-button {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  color: var(--apple-text-primary) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-theme="light"] .apple-button:hover {
+  background: #f4f6fa !important;
+  border-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+html[data-theme="light"] .apple-button.active,
+html[data-theme="light"] .apple-preset-pill.active {
+  background: linear-gradient(135deg, #FF2D55 0%, #EA1844 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 45, 85, 0.5) !important;
+  box-shadow: 0 3px 12px rgba(255, 45, 85, 0.28) !important;
+}
+
+html[data-theme="light"] .apple-segmented-bar {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 9999px !important;
+  padding: 3px !important;
+}
+
+html[data-theme="light"] .apple-segmented-item:not(.active) {
+  color: var(--apple-text-secondary) !important;
+}
+
+html[data-theme="light"] .apple-segmented-item.active {
+  background: #ffffff !important;
+  color: var(--apple-text-primary) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 9999px !important;
+}
+
+/* ── Cross-Tab Inset Panels & Gallery Grids ── */
+html[data-theme="light"] .apple-glass-card-sub,
+html[data-theme="light"] .apple-well-panel {
+  background: var(--apple-well-bg) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 14px !important;
+  color: var(--apple-text-primary) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ACTIVITIES TAB — SIGNATURE APPLE REDESIGN
+   ══════════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] #activities-gallery-grid .apple-glass-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03), 0 8px 24px rgba(0, 0, 0, 0.035) !important;
+  border-radius: 20px !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.2s ease !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-glass-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.07), 0 4px 10px rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Inner Activity Model Pedestal */
+html[data-theme="light"] #activities-gallery-grid div[style*="radial-gradient"] {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 45, 85, 0.05) 0%, rgba(244, 246, 250, 0.98) 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 14px !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid img {
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.14)) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid h4 {
+  color: var(--apple-text-primary) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.012em !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid p {
+  color: var(--apple-text-secondary) !important;
+  line-height: 1.45 !important;
+}
+
+/* Inner card divider above controls */
+html[data-theme="light"] #activities-gallery-grid .apple-glass-card > div[style*="border-top"],
+html[data-theme="light"] #activities-gallery-grid .apple-glass-card div[style*="border-top: 1px solid rgba(255, 255, 255"] {
+  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Authentic Apple Tinted Category Badges on Activity Cards */
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge {
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge[data-category="Movement"] {
+  background: rgba(0, 122, 255, 0.1) !important;
+  color: #007aff !important;
+  border: 1px solid rgba(0, 122, 255, 0.25) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge[data-category="Rest & Poses"] {
+  background: rgba(52, 199, 89, 0.12) !important;
+  color: #248a3d !important;
+  border: 1px solid rgba(52, 199, 89, 0.26) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge[data-category="Expressions"] {
+  background: rgba(175, 82, 222, 0.1) !important;
+  color: #8944ab !important;
+  border: 1px solid rgba(175, 82, 222, 0.25) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge[data-category="Window Tricks"] {
+  background: rgba(255, 45, 85, 0.1) !important;
+  color: #d8143d !important;
+  border: 1px solid rgba(255, 45, 85, 0.25) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge[data-category="Advanced Transitions"] {
+  background: rgba(255, 149, 0, 0.12) !important;
+  color: #c96d00 !important;
+  border: 1px solid rgba(255, 149, 0, 0.28) !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge[data-category="Effects & Reactions"] {
+  background: rgba(234, 179, 8, 0.14) !important;
+  color: #996e00 !important;
+  border: 1px solid rgba(234, 179, 8, 0.32) !important;
+}
+
+/* Fallback badge styling */
+html[data-theme="light"] #activities-gallery-grid .apple-pill-badge:not([data-category]),
+html[data-theme="light"] #activities-gallery-grid span[style*="border-radius: 9999px"]:not([data-category]) {
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  font-size: 10px !important;
+}
+
+/* Activities Filter Category Buttons */
+html[data-theme="light"] .activity-category-pill {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  color: var(--apple-text-secondary) !important;
+  border-radius: 9999px !important;
+  padding: 6px 16px !important;
+  font-weight: 500 !important;
+  font-size: 12.5px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-theme="light"] .activity-category-pill:hover {
+  background: #f8f9fc !important;
+  border-color: rgba(0, 0, 0, 0.16) !important;
+  color: var(--apple-text-primary) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+html[data-theme="light"] .activity-category-pill.active {
+  background: linear-gradient(135deg, #FF2D55 0%, #EA1844 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 45, 85, 0.5) !important;
+  box-shadow: 0 3px 12px rgba(255, 45, 85, 0.3) !important;
+  font-weight: 600 !important;
+  transform: none !important;
+}
+
+/* Quick Action Buttons (Enable All, Disable All, Defaults) */
+html[data-theme="light"] .activity-action-btn,
+html[data-theme="light"] .apple-action-pill {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  color: #3c3c43 !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 550 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-theme="light"] .activity-action-btn:hover,
+html[data-theme="light"] .apple-action-pill:hover {
+  background: #f8f9fc !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  color: #1d1d1f !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* "▶ Play" Trigger Button inside Activity Cards */
+html[data-theme="light"] #activities-gallery-grid .action-btn,
+html[data-theme="light"] #activities-gallery-grid button.apple-button {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #1d1d1f !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-theme="light"] #activities-gallery-grid .action-btn:hover,
+html[data-theme="light"] #activities-gallery-grid button.apple-button:hover {
+  background: #FF2D55 !important;
+  border-color: #FF2D55 !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(255, 45, 85, 0.35) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Secondary Search Input in Activities */
+html[data-theme="light"] #activity-search-field,
+html[data-theme="light"] input#activity-search-field,
+html[data-theme="light"] input[placeholder*="Search activities"] {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  border-radius: 12px !important;
+  color: var(--apple-text-primary) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-theme="light"] input#activity-search-field:focus,
+html[data-theme="light"] input[placeholder*="Search activities"]:focus {
+  border-color: #FF2D55 !important;
+  box-shadow: 0 0 0 3px rgba(255, 45, 85, 0.14) !important;
+}
+
+/* Autonomy & Timing Preferences Card inside Activities tab */
+html[data-theme="light"] #dashboard-activities-view .apple-glass-card[data-border="true"] {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03), 0 8px 24px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 20px !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CHARACTERS TAB — SIGNATURE APPLE REDESIGN
+   ══════════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] #characters-gallery-grid .apple-glass-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03), 0 8px 24px rgba(0, 0, 0, 0.035) !important;
+  border-radius: 20px !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.2s ease !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid .apple-glass-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.07), 0 4px 10px rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Selected Character Card */
+html[data-theme="light"] #characters-gallery-grid .apple-glass-card.selected {
+  background: #ffffff !important;
+  border: 2px solid #FF2D55 !important;
+  border-top: 2px solid #FF2D55 !important;
+  box-shadow: 0 4px 18px rgba(255, 45, 85, 0.2), 0 12px 34px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid .apple-glass-card.selected div[style*="radial-gradient"] {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 45, 85, 0.12) 0%, rgba(255, 246, 248, 0.98) 100%) !important;
+  border: 1px solid rgba(255, 45, 85, 0.28) !important;
+}
+
+/* Active Companion Button */
+html[data-theme="light"] #characters-gallery-grid .active-companion-btn {
+  background: linear-gradient(135deg, #FF2D55 0%, #EA1844 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(255, 45, 85, 0.35) !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid .apple-button:not(.active-companion-btn) {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #1d1d1f !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  font-weight: 550 !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid .apple-button:not(.active-companion-btn):hover {
+  background: rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Inactive Character Pedestal */
+html[data-theme="light"] #characters-gallery-grid div[style*="radial-gradient"] {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 45, 85, 0.05) 0%, rgba(244, 246, 250, 0.98) 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 16px !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid h4 {
+  color: var(--apple-text-primary) !important;
+  font-weight: 650 !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid p {
+  color: var(--apple-text-secondary) !important;
+}
+
+/* Delete button on custom character cards */
+html[data-theme="light"] .apple-char-delete-btn {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 45, 85, 0.3) !important;
+  color: #ff2d55 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .apple-char-delete-btn:hover {
+  background: #ff2d55 !important;
+  color: #ffffff !important;
+  border-color: #ff2d55 !important;
+  box-shadow: 0 4px 14px rgba(255, 45, 85, 0.4) !important;
+}
+
+/* "+ Add Character" Card in Light Mode */
+html[data-theme="light"] #characters-gallery-grid .add-character-card,
+html[data-theme="light"] #characters-gallery-grid div[style*="dashed"] {
+  background: rgba(255, 45, 85, 0.03) !important;
+  border: 1.5px dashed rgba(255, 45, 85, 0.45) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-theme="light"] #characters-gallery-grid .add-character-card:hover,
+html[data-theme="light"] #characters-gallery-grid div[style*="dashed"]:hover {
+  background: rgba(255, 45, 85, 0.07) !important;
+  border-color: #FF2D55 !important;
+  box-shadow: 0 10px 26px rgba(255, 45, 85, 0.15) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   OTHER TABS (Desktop & Apps, Focus, Controls, Settings, Profile & Bin)
+   ══════════════════════════════════════════════════════════════════════════ */
+/* Desktop & Apps */
+html[data-theme="light"] #mode-card-desktop,
+html[data-theme="light"] #mode-card-application {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 18px !important;
+}
+
+html[data-theme="light"] #mode-card-desktop h4,
+html[data-theme="light"] #mode-card-application h4 {
+  color: var(--apple-text-primary) !important;
+}
+
+/* Focus & Breaks */
+html[data-theme="light"] #focus-timer-clock {
+  color: var(--apple-blue) !important;
+  text-shadow: 0 2px 12px rgba(0, 122, 255, 0.15) !important;
+}
+
+html[data-theme="light"] #focus-timer-badge {
+  background: rgba(0, 122, 255, 0.09) !important;
+  border: 1px solid rgba(0, 122, 255, 0.22) !important;
+  color: var(--apple-blue) !important;
+}
+
+/* Controls Tab */
+html[data-theme="light"] .dpad-btn {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  color: var(--apple-text-primary) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-theme="light"] .dpad-btn:hover {
+  background: #f4f6fa !important;
+  border-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+/* Settings Tab */
+html[data-theme="light"] .settings-section-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 20px !important;
+}
+
+html[data-theme="light"] .settings-row {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 12px !important;
+}
+
+html[data-theme="light"] .settings-row:hover {
+  background: #f0f3f8 !important;
+}
+
+html[data-theme="light"] .settings-row > div > span,
+html[data-theme="light"] .settings-row span {
+  color: var(--apple-text-primary) !important;
+}
+
+html[data-theme="light"] .settings-row p {
+  color: var(--apple-text-secondary) !important;
+}
+
+/* Profile Tab & Character Bin */
+html[data-theme="light"] #dashboard-profile-view .apple-glass-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 20px !important;
+}
+
+html[data-theme="light"] #profile-main-avatar {
+  background: #f0f2f7 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] #bin-characters-grid .apple-glass-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 18px !important;
+}
+
+html[data-theme="light"] #bin-empty-state {
+  background: #ffffff !important;
+  border: 1px dashed rgba(0, 0, 0, 0.1) !important;
+  border-radius: 18px !important;
+}
+
+html[data-theme="light"] .bin-restore-btn {
+  background: rgba(52, 199, 89, 0.1) !important;
+  border: 1px solid rgba(52, 199, 89, 0.25) !important;
+  color: #15803d !important;
+  border-radius: 9999px !important;
+}
+
+html[data-theme="light"] .bin-restore-btn:hover {
+  background: #34c759 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3) !important;
+}
+
+/* Avoid animating layout/blur on the input and navigation paths. */
+[data-framer-name="Dashboard content"] {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto !important;
+  overscroll-behavior: contain;
+}
+[data-framer-name="Sidebar"] {
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  justify-content: flex-start !important;
+  gap: 24px !important;
+}
+[data-framer-name="Sidebar"] > * { flex-shrink: 0 !important; }
+[data-framer-name="Dashboard content"] > .dashboard-tab-view { flex-shrink: 0 !important; }
+[data-framer-name="Dashboard content"]::-webkit-scrollbar,
+[data-framer-name="Sidebar"]::-webkit-scrollbar { display: block !important; width: 10px !important; }
+[data-framer-name="Dashboard content"]::-webkit-scrollbar-thumb,
+[data-framer-name="Sidebar"]::-webkit-scrollbar-thumb {
+  background: #697386; border: 2px solid var(--apple-canvas); border-radius: 8px;
+}
+#spider-search-dropdown::-webkit-scrollbar { display: block !important; width: 6px !important; }
+#spider-search-dropdown::-webkit-scrollbar-track { background: transparent !important; }
+#spider-search-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-radius: 6px !important;
+  border: none !important;
+}
+#spider-search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+[data-framer-name="Search field"], #spider-search-field {
+  contain: none !important;
+  overflow: visible !important;
+  z-index: 100000 !important;
+}
+/* Sticky Notes sidebar icon: strictly outline vector with transparent fill */
+[data-framer-name="Sticky Notes"] svg,
+[data-framer-name="Sticky Notes"] svg * {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+[data-framer-name="Sticky Notes"].nav-active svg,
+[data-framer-name="Sticky Notes"].nav-active svg * {
+  fill: none !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+#spider-search-dropdown {
+  max-height: min(490px, calc(100vh - 110px)) !important;
+  overflow-y: auto !important;
+  border-radius: 12px !important;
+}
+html:not([data-theme="light"]) #spider-search-dropdown {
+  background: #0f131d !important;
+}
+.spider-search-result-item { flex-shrink: 0 !important; }
+html:not([data-theme="light"]) [data-framer-name="Toolbar"] {
+  overflow: visible !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--apple-canvas) !important;
+}
+.dashboard-tab-view { animation: none !important; }
+.spider-search-result-item {
+  transition-property: color, background-color, opacity !important;
+  touch-action: manipulation;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --apple-card-bg: #131724; --apple-sidebar-bg: #0b0e16; --apple-toolbar-bg: #07090f; }
+  * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DEDICATED TOP BAR & LEFT SIDEBAR STABILITY OVERRIDES
+   Applies EXCLUSIVELY to Dark Themes (never leaks to light theme).
+   ══════════════════════════════════════════════════════════════════════════ */
+html:not([data-theme="light"]) [data-framer-name="Sidebar"],
+html:not([data-theme="light"]) .framer-vex8ir,
+html:not([data-theme="light"]) [data-framer-name="Toolbar"],
+html:not([data-theme="light"]) .framer-1jtgivx,
+html:not([data-theme="light"]) [data-framer-name="Search field"],
+html:not([data-theme="light"]) .framer-t0v0ag,
+html:not([data-theme="light"]) #spider-search-field,
+html:not([data-theme="light"]) #spider-status-capsule,
+html:not([data-theme="light"]) .framer-1c1qog8,
+html:not([data-theme="light"]) .sidebar-footer-card,
+html:not([data-theme="light"]) [data-framer-name="Sidebar Footer"],
+html:not([data-theme="light"]) [data-framer-name="Current companion"],
+html:not([data-theme="light"]) .framer-15s0sic {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  will-change: auto !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+html:not([data-theme="light"]) [data-framer-name="Sidebar"],
+html:not([data-theme="light"]) .framer-vex8ir {
+  background: #090c14 !important;
+  contain: paint !important;
+}
+
+html:not([data-theme="light"]) [data-framer-name="Toolbar"],
+html:not([data-theme="light"]) .framer-1jtgivx {
+  background: #090c14 !important;
+  contain: none !important;
+  overflow: visible !important;
+  z-index: 99999 !important;
+}
+
+html:not([data-theme="light"]) [data-framer-name="Search field"],
+html:not([data-theme="light"]) #spider-search-field {
+  background: #141824 !important;
+}
+
+html:not([data-theme="light"]) #spider-status-capsule,
+html:not([data-theme="light"]) .framer-1c1qog8,
+html:not([data-theme="light"]) .sidebar-footer-card,
+html:not([data-theme="light"]) [data-framer-name="Current companion"],
+html:not([data-theme="light"]) .framer-15s0sic {
+  background: #101420 !important;
+}
+
+/* Strictly disable all hover/active transitions, scale, and transforms on Sidebar & Toolbar for dark mode */
+html:not([data-theme="light"]) :is([data-framer-name="Sidebar"], .framer-vex8ir, [data-framer-name="Toolbar"], .framer-1jtgivx) :is(*, *::before, *::after) {
+  will-change: auto !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+html:not([data-theme="light"]) :is([data-framer-name="Sidebar"], .framer-vex8ir, [data-framer-name="Toolbar"], .framer-1jtgivx) :is(*:hover, *:active, *:focus, *:focus-within) {
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+/* Static hover background colors for dark mode */
+html:not([data-theme="light"]) [data-framer-name="Main navigation"] > div:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+html:not([data-theme="light"]) .sidebar-footer-card .sidebar-footer-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not([data-theme="light"]) .framer-91hj6l p:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+}
+
+html:not([data-theme="light"]) [data-framer-name="Search field"]:hover,
+html:not([data-theme="light"]) #spider-search-field:hover {
+  background: #181d2c !important;
+  border-color: rgba(255, 45, 85, 0.4) !important;
+}
+
+html:not([data-theme="light"]) .spider-search-mic-btn:hover {
+  background: #f43f5e !important;
+}
+
+html:not([data-theme="light"]) #spider-status-capsule:hover,
+html:not([data-theme="light"]) .framer-1c1qog8:hover {
+  background: #161c2b !important;
+}

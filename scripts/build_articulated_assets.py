@@ -41,6 +41,9 @@ def layer(source, polygon):
 
 
 def transform(image, pivot, angle=0, dx=0, dy=0, scale_y=1):
+    # Fast path: if no transformation is requested, return original directly
+    if abs(angle) < 1e-4 and abs(dx) < 1e-4 and abs(dy) < 1e-4 and abs(scale_y - 1.0) < 1e-4:
+        return image
     # Inverse affine mapping around the joint keeps each cutout attached.
     theta = math.radians(angle)
     c, s = math.cos(theta), math.sin(theta)
@@ -48,7 +51,7 @@ def transform(image, pivot, angle=0, dx=0, dy=0, scale_y=1):
     a, b, d, e = c, s, -s / scale_y, c / scale_y
     return image.transform(SIZE, Image.Transform.AFFINE,
         (a, b, px-a*(px+dx)-b*(py+dy), d, e, py-d*(px+dx)-e*(py+dy)),
-        resample=Image.Resampling.BICUBIC)
+        resample=Image.Resampling.BILINEAR)
 
 
 def sleepy_head(head, rig, amount):

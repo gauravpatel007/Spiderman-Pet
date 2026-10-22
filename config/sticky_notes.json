@@ -1,0 +1,84 @@
+[
+  {
+    "id": "note_spidey_mission",
+    "title": "Daily Hero Mission",
+    "color": "spidey_red",
+    "content": "Keep New York safe and balance desktop productivity with web-slinging acrobatics!",
+    "items": [
+      {
+        "id": "item_1",
+        "text": "Check email & daily schedule",
+        "done": true
+      },
+      {
+        "id": "item_2",
+        "text": "Finish coding current feature",
+        "done": false
+      },
+      {
+        "id": "item_3",
+        "text": "Grab pizza with Ned & MJ \ud83c\udf55",
+        "done": false
+      }
+    ],
+    "pinned": true,
+    "desktop_visible": false,
+    "pos_x": 609,
+    "pos_y": 198,
+    "width": 290,
+    "height": 330,
+    "minimized": false,
+    "created_at": "2026-10-22T10:00:00Z",
+    "updated_at": "2026-10-22T11:02:24Z",
+    "tasks": [
+      {
+        "id": "item_1",
+        "text": "Check email & daily schedule",
+        "done": true
+      },
+      {
+        "id": "item_2",
+        "text": "Finish coding current feature",
+        "done": false
+      },
+      {
+        "id": "item_3",
+        "text": "Grab pizza with Ned & MJ \ud83c\udf55",
+        "done": false
+      },
+      {
+        "id": "item_1792666729789",
+        "text": "hello",
+        "done": false,
+        "completed": false
+      }
+    ]
+  },
+  {
+    "id": "note_web_lab",
+    "title": "Peter's Science Lab Ideas",
+    "color": "gwen_cyan",
+    "content": "Formulas for high-tensile web fluid and electro-insulated nano mesh suits.",
+    "items": [
+      {
+        "id": "item_lab_1",
+        "text": "Synthesize web-fluid formula v4.2",
+        "done": true
+      },
+      {
+        "id": "item_lab_2",
+        "text": "Test nano-weave suit resistance",
+        "done": false
+      }
+    ],
+    "pinned": false,
+    "desktop_visible": true,
+    "pos_x": 767,
+    "pos_y": 282,
+    "width": 290,
+    "height": 300,
+    "minimized": false,
+    "created_at": "2026-10-22T10:15:00Z",
+    "updated_at": "2026-10-22T10:15:00Z"
+  }
+]

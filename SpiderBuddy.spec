@@ -12,7 +12,7 @@ datas = [
     (os.path.join(project_dir, 'config'), 'config'),
     (os.path.join(project_dir, 'assets'), 'assets'),
     (os.path.join(project_dir, 'ui', 'qml'), 'ui/qml'),
-    (os.path.join(project_dir, 'BIN', 'Frammer UI'), 'BIN/Frammer UI'),
+    (os.path.join(project_dir, 'Frontend'), 'Frontend'),
 ]
 
 hidden_imports = [

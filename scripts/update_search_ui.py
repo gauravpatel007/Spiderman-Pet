@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-html_path = Path("BIN/Frammer UI/index.html")
+html_path = Path("Frontend/index.html")
 raw = html_path.read_text(encoding="utf-8")
 
 def safe_replace(content, pattern, new_text):
@@ -23,26 +23,29 @@ new_css = """/* Floating Spotlight Search Results Dropdown */
       left: 0 !important;
       right: 0 !important;
       background: #0f131d !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
-      border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-      border-radius: 12px !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 14px !important;
       box-shadow: 
-        0 16px 40px rgba(0, 0, 0, 0.75),
-        0 4px 16px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-      z-index: 99999 !important;
+        0 24px 50px rgba(0, 0, 0, 0.88),
+        0 8px 24px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+      z-index: 1000000 !important;
       overflow-y: auto !important;
       overflow-x: hidden !important;
       display: none !important;
       flex-direction: column !important;
       padding: 6px !important;
       min-width: 100% !important;
-      max-height: min(490px, calc(100vh - 110px)) !important;
-      contain: layout style !important;
+      max-height: min(490px, calc(100vh - 90px)) !important;
+      contain: none !important;
       animation: searchDropIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) both !important;
     }
     #spider-search-dropdown.visible {
       display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
     }
     @keyframes searchDropIn {
       from { opacity: 0; transform: translateY(-4px); }
@@ -553,5 +556,5 @@ new_js = """<!-- Spider-Buddy Spotlight Search Logic -->
 raw = safe_replace(raw, js_pattern, new_js)
 
 html_path.write_text(raw, encoding="utf-8")
-Path("BIN/Frammer UI/index").write_text(raw, encoding="utf-8")
+Path("Frontend/index").write_text(raw, encoding="utf-8")
 print("SUCCESSFULLY_UPDATED_WITH_CLEAN_REPLACE")

@@ -116,3 +116,39 @@ class CharacterManager(QObject):
         logger.info(f"Active character switched to: {self._active_character.display_name}")
         self.character_changed.emit(self._active_character)
         return True
+
+    DEFAULT_CHARACTER_IDS = frozenset({
+        "tom_holland", "miles_morales", "gwen_stacy_1", "gwen_stacy", "spider_2"
+    })
+
+    def delete_character(self, character_id: str) -> bool:
+        """Permanently delete a custom character.
+
+        The 4 default built-in characters (Tom Holland, Miles Morales, Gwen Stacy, Spider 2)
+        cannot be deleted.
+        """
+        if character_id in self.DEFAULT_CHARACTER_IDS:
+            logger.warning("Refused to delete protected default character: %s", character_id)
+            return False
+
+        profile = self._characters.get(character_id)
+        if not profile:
+            logger.warning("Character not found for deletion: %s", character_id)
+            return False
+
+        was_active = bool(self._active_character and self._active_character.id == character_id)
+
+        import shutil
+        char_path = Path(profile.root_path)
+        if char_path.exists() and char_path.is_dir():
+            shutil.rmtree(char_path, ignore_errors=True)
+            logger.info("Successfully deleted character folder: %s", char_path)
+
+        self.discover_characters()
+
+        if was_active:
+            fallback = "tom_holland" if "tom_holland" in self._characters else next(iter(self._characters.keys()), "")
+            if fallback:
+                self.set_active_character(fallback)
+
+        return True

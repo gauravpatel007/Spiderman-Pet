@@ -11,9 +11,16 @@ Tests:
 - Security & authorization Origin / Host filtering
 """
 import json
+import os
+import sys
 import urllib.request
 import urllib.error
 from pathlib import Path
+
+root_dir = Path(__file__).resolve().parent.parent
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
+
 import pytest
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QApplication

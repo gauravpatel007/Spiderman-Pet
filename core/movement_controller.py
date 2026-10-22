@@ -52,12 +52,39 @@ class MovementController(QObject):
         self.target_vx = 0.0
         self.acceleration = 900.0
         self._swing = None
+        self._fling_active = False
+        self._fling_bounces = 0
+        self._fling_time = 0.0
+        self._fling_rot = 0.0
+        self._fling_safety_caught = False
+        self._fling_safety_timer = 0.0
+        self._fling_safety_anchor = None
         self._last_tick = time.monotonic()
         self._contacts = set()
         # Physics tick timer (60 Hz)
         self._timer = QTimer(self)
         self._timer.setInterval(16)
         self._timer.timeout.connect(self._update_physics)
+
+    def set_fling_physics(self, vx: float, vy: float) -> None:
+        """Launch Spider-Man with kinetic drag-and-throw fling physics."""
+        self._swing = None
+        self.web_changed.emit(None)
+        self.mode = 'fling'
+        clamped_vx = max(-2200.0, min(2200.0, float(vx)))
+        clamped_vy = max(-2200.0, min(2200.0, float(vy)))
+        self.vx = self.target_vx = clamped_vx
+        self.vy = clamped_vy
+        self.is_grounded = False
+        self._contacts.clear()
+        self._fling_active = True
+        self._fling_bounces = 0
+        self._fling_time = 0.0
+        self._fling_rot = 0.0
+        self._fling_safety_caught = False
+        self._fling_safety_timer = 0.0
+        self._fling_safety_anchor = None
+        self.airborne.emit()
 
     def set_active_trampoline(self, trampoline) -> None:
         """Assign or update active web trampoline for bounce physics."""
@@ -174,6 +201,9 @@ class MovementController(QObject):
 
     def set_motion(self, mode, horizontal=0.0, vertical=0.0):
         self._swing = None
+        if mode != 'fling':
+            self._fling_active = False
+            self._fling_safety_caught = False
         self.web_changed.emit(None)
         self.orientation_changed.emit(0.0)
         self.mode = mode
@@ -247,6 +277,37 @@ class MovementController(QObject):
             ny = ay+length*math.cos(angle)-self.height/2
             self.vx = length*math.cos(angle)*omega
             self.vy = -length*math.sin(angle)*omega
+        elif self.mode == 'fling':
+            if self._fling_safety_caught:
+                # Decelerate momentum and safely lower to ground
+                self.vx *= max(0.0, 1.0 - 5.5 * dt)
+                self.vy = min(180.0, self.vy + 260.0 * dt)
+                self._fling_rot *= max(0.0, 1.0 - 8.0 * dt)
+                self.orientation_changed.emit(self._fling_rot)
+                self._fling_safety_timer += dt
+
+                # Update safety web strand to ceiling anchor
+                if self._fling_safety_anchor:
+                    ax, ay = self._fling_safety_anchor
+                    self.web_changed.emit(((ax, ay), (self.x + self.width * 0.5, self.y + self.height * 0.25)))
+
+                nx = self.x + self.vx * dt
+                ny = self.y + self.vy * dt
+
+                if self._fling_safety_timer >= 0.55:
+                    self.web_changed.emit(None)
+                    self.orientation_changed.emit(0.0)
+                    self.mode = 'air'
+                    self.target_vx = self.vx
+            else:
+                self._fling_time += dt
+                # Fling flight physics: gravity, air drag, and spin tumbling
+                self.vy = min(1500.0, self.vy + 1850.0 * dt)
+                self.vx *= max(0.0, 1.0 - 0.25 * dt)
+                self._fling_rot = (self._fling_rot + self.vx * 0.45 * dt) % 360
+                self.orientation_changed.emit(self._fling_rot)
+                nx = self.x + self.vx * dt
+                ny = self.y + self.vy * dt
         else:
             delta = self.target_vx-self.vx
             self.vx += max(-self.acceleration*dt, min(delta, self.acceleration*dt))
@@ -310,10 +371,43 @@ class MovementController(QObject):
             contacts.add('floor' if ny > py else 'ceiling')
         self.x, self.y = px, py
         self.is_grounded = 'floor' in contacts or self._project_position(px, py+1)[1] < py+0.5
-        if any(c.endswith('wall') for c in contacts):
-            self.vx = 0.0
-        if 'floor' in contacts or 'ceiling' in contacts:
-            self.vy = 0.0
+
+        if self._fling_active or self.mode == 'fling':
+            # Wall rebound: reverse velocity with damping!
+            if 'left_wall' in contacts or 'right_wall' in contacts:
+                self.vx = -self.vx * 0.72
+                self._fling_bounces += 1
+                if abs(self.vx) < 40:
+                    self.vx = 0.0
+            # Ceiling rebound: deflect downward with damping!
+            if 'ceiling' in contacts:
+                self.vy = abs(self.vy) * 0.62
+                self._fling_bounces += 1
+
+            # Safety Web Catch Trigger:
+            if (self._fling_bounces >= 1 or self._fling_time >= 0.38) and not self._fling_safety_caught:
+                area = self.active_region() or (self.regions[0] if self.regions else None)
+                if area and (self.y - area.top()) >= 70 and (area.bottom() - self.height - self.y) >= 60:
+                    self._fling_safety_caught = True
+                    self._fling_safety_timer = 0.0
+                    self._fling_safety_anchor = (self.x + self.width * 0.5, float(area.top()))
+                    self.boundary_hit.emit('safety_web_catch')
+
+            # Floor contact: safe landing
+            if 'floor' in contacts:
+                self.web_changed.emit(None)
+                self.orientation_changed.emit(0.0)
+                self.mode = 'ground'
+                self.vx = self.vy = 0.0
+                self.is_grounded = True
+                self._fling_active = False
+                self._fling_safety_caught = False
+                self.boundary_hit.emit('fling_land')
+        else:
+            if any(c.endswith('wall') for c in contacts):
+                self.vx = 0.0
+            if 'floor' in contacts or 'ceiling' in contacts:
+                self.vy = 0.0
         if abs(self.vx) > 1:
             facing = self.vx < 0
             if facing != self.is_facing_left:

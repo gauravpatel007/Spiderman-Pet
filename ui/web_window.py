@@ -203,6 +203,8 @@ class WebMainWindow(QMainWindow):
     mood_preset_changed = Signal(str)
     reset_companion_stats_requested = Signal()
     test_sound_requested = Signal()
+    sticky_note_action_received = Signal(dict)
+    shoot_web_cursor_requested = Signal(int, int)
 
     def __init__(self, character_mgr=None, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -265,7 +267,7 @@ class WebMainWindow(QMainWindow):
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
 
-        # 1. Initialize embedded web server serving BIN/Frammer UI
+        # 1. Initialize embedded web server serving Frontend
         self.web_server = WebServer()
         self.web_server.action_received.connect(self._on_web_action)
         self.web_server.action_callback = self._on_web_action
@@ -401,6 +403,11 @@ class WebMainWindow(QMainWindow):
         if not self.character_mgr:
             return result
         active_id = self.character_mgr.active_character.id if self.character_mgr.active_character else ""
+        protected_ids = getattr(
+            self.character_mgr,
+            "DEFAULT_CHARACTER_IDS",
+            frozenset({"tom_holland", "miles_morales", "gwen_stacy_1", "gwen_stacy", "spider_2"})
+        )
         for cid, profile in self.character_mgr.available_characters.items():
             result.append({
                 "id": profile.id,
@@ -409,6 +416,7 @@ class WebMainWindow(QMainWindow):
                 "description": profile.description,
                 "personality": getattr(profile, "personality", "balanced"),
                 "selected": (profile.id == active_id),
+                "can_delete": (profile.id not in protected_ids),
                 "preview_url": f"/api/character_image/{profile.id}.png"
             })
         return result
@@ -518,9 +526,23 @@ class WebMainWindow(QMainWindow):
     def _open_import_dialog(self):
         """Open native character artwork import dialog."""
         try:
+            from core.character_manager import CharacterManager
+            if not self.character_mgr:
+                self.character_mgr = CharacterManager(parent=self)
+
             from ui.character_selection import AddCharacterDialog
-            dlg = AddCharacterDialog(self.character_mgr, parent=self)
             from PySide6.QtWidgets import QDialog
+            dlg = AddCharacterDialog(self.character_mgr, parent=self)
+            
+            # Center neatly on the web window geometry and bring to front
+            geo = self.geometry()
+            cx = geo.x() + (geo.width() - dlg.width()) // 2
+            cy = geo.y() + (geo.height() - dlg.height()) // 2
+            dlg.move(max(20, cx), max(20, cy))
+            dlg.show()
+            dlg.raise_()
+            dlg.activateWindow()
+
             if dlg.exec() == QDialog.Accepted:
                 new_cid = getattr(dlg, "created_character_id", None)
                 if new_cid and self.character_mgr:
@@ -529,8 +551,15 @@ class WebMainWindow(QMainWindow):
                     self.character_changed.emit(new_cid)
                     self._character_updated(new_cid)
                     self._sync_full_state_to_ui()
-                    # Trigger web page to reload characters
-                    self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadCharacters && window.SpiderBuddy.loadCharacters()")
+                    # Trigger web page to reload characters with fresh cache
+                    self._run_js("""
+                        if (window.SpiderBuddy) {
+                            window.SpiderBuddy._lastCharsStr = null;
+                            if (window.SpiderBuddy.loadCharacters) {
+                                window.SpiderBuddy.loadCharacters();
+                            }
+                        }
+                    """)
         except Exception as e:
             logger.exception("Failed to open AddCharacterDialog: %s", e)
 
@@ -668,6 +697,9 @@ class WebMainWindow(QMainWindow):
             "movement_speed": round(float(self.settings.get("behavior.movement_speed", 3.0)), 1),
             "preset": str(self.settings.get("behavior.preset", "normal")),
             "enable_comic_bubbles": bool(self.settings.get("behavior.enable_comic_bubbles", True)),
+            "enable_sticky_notes": bool(self.settings.get("behavior.enable_sticky_notes", True)),
+            "enable_fling_physics": bool(self.settings.get("behavior.enable_fling_physics", True)),
+            "enable_web_shoot_cursor": bool(self.settings.get("behavior.enable_web_shoot_cursor", True)),
             "hotkeys": hotkey_list
         }
 
@@ -746,6 +778,9 @@ class WebMainWindow(QMainWindow):
             "hotkeys_require_modifier": bool(self.settings.get("behavior.hotkeys_require_modifier", False)),
             "wasd_movement_enabled": bool(self.settings.get("behavior.wasd_movement_enabled", True)),
             "wasd_static_pin": bool(self.settings.get("behavior.wasd_static_pin", True)),
+            "enable_sticky_notes": bool(self.settings.get("behavior.enable_sticky_notes", True)),
+            "enable_fling_physics": bool(self.settings.get("behavior.enable_fling_physics", True)),
+            "enable_web_shoot_cursor": bool(self.settings.get("behavior.enable_web_shoot_cursor", True)),
             "config_path": cfg_path,
             "cache_size": self._compute_cache_size(),
             "version": "v2.5.0",
@@ -801,6 +836,8 @@ class WebMainWindow(QMainWindow):
             is_hidden = not self.settings.get("general.hidden", False)
             self.settings.set("general.hidden", is_hidden)
             self._run_js(f"window.SpiderBuddy && window.SpiderBuddy.setHidden && window.SpiderBuddy.setHidden({str(is_hidden).lower()})")
+        elif action == "sticky_note_sync":
+            self.sticky_note_action_received.emit(data)
         elif action in ("start_focus", "start_focus_timer"):
             minutes = float(data.get("minutes", 25.0))
             self.focus_timer_started.emit(minutes)
@@ -863,6 +900,26 @@ class WebMainWindow(QMainWindow):
                 self._sync_full_state_to_ui()
                 self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadCharacters && window.SpiderBuddy.loadCharacters()")
                 self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadActivities && window.SpiderBuddy.loadActivities()")
+        elif action == "delete_character":
+            cid = data.get("character_id")
+            if cid and self.character_mgr and hasattr(self.character_mgr, "delete_character"):
+                protected_ids = getattr(
+                    self.character_mgr,
+                    "DEFAULT_CHARACTER_IDS",
+                    frozenset({"tom_holland", "miles_morales", "gwen_stacy_1", "gwen_stacy", "spider_2"})
+                )
+                if cid in protected_ids:
+                    logger.warning("Refused delete_character for protected character: %s", cid)
+                    return
+                success = self.character_mgr.delete_character(cid)
+                if success:
+                    active = self.character_mgr.active_character
+                    if active:
+                        self.character_changed.emit(active.id)
+                        self._character_updated(active.id)
+                    self._sync_full_state_to_ui()
+                    self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadCharacters && window.SpiderBuddy.loadCharacters()")
+                    self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadActivities && window.SpiderBuddy.loadActivities()")
         elif action == "set_size":
             size = int(data.get("size", 200))
             self.settings.set("general.scale", size / 200.0)
@@ -1067,6 +1124,26 @@ class WebMainWindow(QMainWindow):
             val = bool(data.get("enabled", True))
             self.settings.set("behavior.enable_mouse_following", val)
             self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadControlSettings && window.SpiderBuddy.loadControlSettings()")
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadAppSettings && window.SpiderBuddy.loadAppSettings()")
+        elif action == "toggle_fling_physics":
+            val = bool(data.get("enabled", True))
+            self.settings.set("behavior.enable_fling_physics", val)
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadControlSettings && window.SpiderBuddy.loadControlSettings()")
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadAppSettings && window.SpiderBuddy.loadAppSettings()")
+        elif action == "toggle_web_shoot_cursor":
+            val = bool(data.get("enabled", True))
+            self.settings.set("behavior.enable_web_shoot_cursor", val)
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadControlSettings && window.SpiderBuddy.loadControlSettings()")
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadAppSettings && window.SpiderBuddy.loadAppSettings()")
+        elif action == "toggle_sticky_notes":
+            val = bool(data.get("enabled", True))
+            self.settings.set("behavior.enable_sticky_notes", val)
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadControlSettings && window.SpiderBuddy.loadControlSettings()")
+            self._run_js("window.SpiderBuddy && window.SpiderBuddy.loadAppSettings && window.SpiderBuddy.loadAppSettings()")
+        elif action == "shoot_web_cursor":
+            from PySide6.QtGui import QCursor
+            pos = QCursor.pos()
+            self.shoot_web_cursor_requested.emit(pos.x(), pos.y())
         elif action == "toggle_spider_sense_dodging":
             val = bool(data.get("enabled", True))
             self.settings.set("behavior.enable_spider_sense_dodging", val)
@@ -1412,6 +1489,10 @@ class WebMainWindow(QMainWindow):
         import random
         quote = random.choice(SPIDEY_QUOTES)
         self._run_js(f"window.SpiderBuddy && window.SpiderBuddy.setCharacter({self._json_str(display_name)}, {self._json_str(quote)})")
+
+    def switch_tab(self, tab_name: str):
+        """Navigate to specific dashboard tab."""
+        self._run_js(f"window.SpiderBuddy && window.SpiderBuddy.switchTab && window.SpiderBuddy.switchTab({self._json_str(tab_name)})")
 
     def stop(self):
         """Orderly shutdown of web server."""

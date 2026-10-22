@@ -1,0 +1,15 @@
+[
+  {
+    "id": "symbiote_classic",
+    "name": "Symbiote Spider-Man",
+    "display_name": "Symbiote Peter Parker",
+    "suit": "Alien Symbiote Black Suit",
+    "description": "Alien symbiote suit with liquid web shooters and adaptive camouflage.",
+    "avatar": "images/spiderman_avatar_brand.png",
+    "preview_url": "images/spiderman_avatar_brand.png",
+    "removed_at": "2026-10-21T17:15:00Z",
+    "removed_date_str": "Oct 21, 2026 \u2022 05:15 PM",
+    "can_delete": true,
+    "can_restore": true
+  }
+]

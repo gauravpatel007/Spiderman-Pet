@@ -24,13 +24,30 @@ def setup_logging() -> None:
     root_logger = logging.getLogger()
     if any(getattr(handler, "_spider_buddy", False) for handler in root_logger.handlers):
         return
+    log_dir = None
     appdata = os.getenv("APPDATA")
+    candidates = []
     if appdata:
-        log_dir = Path(appdata) / "SpiderBuddy" / "logs"
-    else:
-        log_dir = Path(__file__).resolve().parent.parent / "logs"
+        candidates.append(Path(appdata) / "SpiderBuddy" / "logs")
+    candidates.append(Path.home() / ".spiderbuddy" / "logs")
+    candidates.append(Path(__file__).resolve().parent.parent / "logs")
+    import tempfile
+    candidates.append(Path(tempfile.gettempdir()) / "SpiderBuddy" / "logs")
 
-    log_dir.mkdir(parents=True, exist_ok=True)
+    for cand in candidates:
+        try:
+            cand.mkdir(parents=True, exist_ok=True)
+            log_dir = cand
+            break
+        except (PermissionError, FileExistsError, OSError):
+            if cand.exists() and cand.is_dir():
+                log_dir = cand
+                break
+            continue
+
+    if log_dir is None:
+        log_dir = Path(tempfile.gettempdir())
+
     log_file = log_dir / "spider_buddy.log"
 
     formatter = logging.Formatter(
@@ -51,13 +68,27 @@ def setup_logging() -> None:
         console_handler.setLevel(logging.INFO)
         handlers.append(console_handler)
 
-    try:
-        file_handler = RotatingFileHandler(str(log_file), maxBytes=2_000_000, backupCount=3, encoding="utf-8")
-        file_handler.setLevel(logging.DEBUG)
-        handlers.append(file_handler)
-    except Exception as e:
-        if sys.stdout is not None:
-            sys.stdout.write(f"Notice: Could not attach log file {log_file}: {e}\n")
+    file_handler = None
+    log_candidates = [
+        log_dir / "spider_buddy.log",
+        Path.home() / ".spiderbuddy" / "spider_buddy.log",
+        Path(tempfile.gettempdir()) / "spider_buddy.log"
+    ]
+
+    for cand_file in log_candidates:
+        try:
+            cand_file.parent.mkdir(parents=True, exist_ok=True)
+            handler = RotatingFileHandler(str(cand_file), maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+            handler.setLevel(logging.DEBUG)
+            handlers.append(handler)
+            file_handler = handler
+            log_file = cand_file
+            break
+        except Exception:
+            continue
+
+    if file_handler is None and sys.stdout is not None:
+        sys.stdout.write("Notice: Could not attach file logger to any candidate location; using console logger.\n")
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)

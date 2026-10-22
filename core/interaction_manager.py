@@ -2,6 +2,7 @@
 import math
 import random
 import time
+from typing import Optional
 from PySide6.QtCore import QObject, QPoint, QRect, Signal, Qt, QTimer
 from PySide6.QtGui import QCursor, QGuiApplication
 from PySide6.QtWidgets import QMenu, QWidgetAction, QSlider
@@ -60,6 +61,7 @@ def is_ctrl_pressed() -> bool:
 
 class InteractionManager(QObject):
     open_dashboard_requested = Signal()
+    open_sticky_notes_requested = Signal()
     quit_requested = Signal()
     trampoline_created = Signal(object, object)  # (p1: QPointF, p2: QPointF)
 
@@ -90,9 +92,26 @@ class InteractionManager(QObject):
         self._last_reaction = 0.0
         self._last_dodge_time = 0.0
         self._nearby = self._menu_open = False
+        self._drag_history = []
+        self._last_follow_jump = 0.0
+        self.movement.boundary_hit.connect(self._on_movement_boundary_hit)
         self._cursor_timer = QTimer(self)
         self._cursor_timer.setInterval(75)
         self._cursor_timer.timeout.connect(self._track_cursor)
+
+    def _on_movement_boundary_hit(self, contact: str) -> None:
+        """Handle dynamic physics boundary reactions (safety web catch, ricochet, landing)."""
+        if contact == 'safety_web_catch':
+            if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                self.overlay.show_speech_bubble("THWIP! 🕸️ Safety catch!", 1600, "action")
+        elif contact == 'fling_land':
+            self.state_machine.transition_to(C.LAND, force=True)
+            if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                quotes = ["Nailed the landing! 🕷️", "Smooth landing! 😎", "Sticky feet! 🕸️", "Safe and sound! 🕷️"]
+                self.overlay.show_speech_bubble(random.choice(quotes), 1600, "comic")
+        elif contact in ('left_wall', 'right_wall', 'ceiling') and getattr(self.movement, 'mode', '') == 'fling':
+            if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                self.overlay.show_speech_bubble(random.choice(["BOING! 💥", "RICOCHET! ⚡", "WHOA! 💥"]), 1200, "action")
 
     def start(self):
         self._last_cursor = None
@@ -107,6 +126,9 @@ class InteractionManager(QObject):
     def handle_mouse_press(self, global_pos, local_pos, button):
         if button != Qt.LeftButton and button != 1:
             return False
+
+        self._drag_history.clear()
+        self._drag_history.append((time.monotonic(), float(global_pos.x()), float(global_pos.y())))
 
         # Interactive Web Trampoline: holding Ctrl + Drag draws a spring trampoline!
         if is_ctrl_pressed() and self.settings.get("behavior.enable_web_trampoline", True):
@@ -286,6 +308,9 @@ class InteractionManager(QObject):
 
         if is_shift_pressed():
             self._shift_drag = True
+        self._drag_history.append((time.monotonic(), float(global_pos.x()), float(global_pos.y())))
+        if len(self._drag_history) > 30:
+            self._drag_history = self._drag_history[-30:]
         self.movement.set_position(global_pos.x()-self._drag_offset.x(), global_pos.y()-self._drag_offset.y())
         return True
 
@@ -307,6 +332,10 @@ class InteractionManager(QObject):
                 self.trampoline_created.emit(self._trampoline_start, p2)
                 if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
                     self.overlay.show_speech_bubble("🕸️ Trampoline set! Ready to bounce!", 1800, "action")
+            else:
+                # Ctrl + Click without dragging: shoot web line to cursor!
+                if self.settings.get("behavior.enable_web_shoot_cursor", True):
+                    self.shoot_web_at_cursor(QCursor.pos())
             self._trampoline_start = None
             return True
 
@@ -411,6 +440,33 @@ class InteractionManager(QObject):
             pass
 
         is_shift = is_shift_pressed() or self._shift_drag
+
+        # 🚀 1. Check Drag-and-Throw (Fling Physics)
+        now = time.monotonic()
+        if (
+            not is_shift
+            and self.settings.get('behavior.enable_fling_physics', True)
+            and len(self._drag_history) >= 2
+        ):
+            recent = [p for p in self._drag_history if (now - p[0]) <= 0.16]
+            if len(recent) >= 2:
+                p_old = recent[0]
+                p_new = recent[-1]
+                dt = max(0.02, p_new[0] - p_old[0])
+                vx = (p_new[1] - p_old[1]) / dt
+                vy = (p_new[2] - p_old[2]) / dt
+                fling_speed = math.hypot(vx, vy)
+                if fling_speed >= 380.0:
+                    self._drag_history.clear()
+                    self._shift_drag = False
+                    self.movement.set_fling_physics(vx, vy)
+                    self.state_machine.transition_to(C.JUMP if vy < -120 else C.FALL, force=True)
+                    if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                        quotes = ["WHOOSH! 🚀", "YAAAAHOO! 🚀", "WHEEEE! 🚀", "HOLD ON! 🚀", "THWIP! 🚀"]
+                        self.overlay.show_speech_bubble(random.choice(quotes), 1600, "action")
+                    return True
+        self._drag_history.clear()
+
         if is_shift and hasattr(self.behavior, "set_pinned"):
             # Shift+drag: lock in place, no activities, hold position!
             self.behavior.set_pinned(True)
@@ -497,6 +553,24 @@ class InteractionManager(QObject):
         if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
             self.overlay.show_speech_bubble("🕸️ Trampoline set below! Jump on it!", 1800, "action")
 
+    def create_desktop_sticky_note(self, pos=None):
+        """Spawn a new web-hanging desktop sticky note near Spider-Man."""
+        if hasattr(self, 'overlay_mgr') and self.overlay_mgr and hasattr(self.overlay_mgr, 'sticky_notes_mgr'):
+            spawn_pos = pos or QPoint(int(self.movement.x + self.movement.width + 16), int(max(40, self.movement.y - 120)))
+            self.overlay_mgr.sticky_notes_mgr.create_new_note(title="Spider Mission Note", pos=spawn_pos)
+            if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
+                self.overlay.show_speech_bubble("🕸️ Sticky note created! Keep your goals in sight!", 2000, "comic")
+
+    def toggle_desktop_sticky_notes(self):
+        """Toggle desktop visibility of all floating notes."""
+        if hasattr(self, 'overlay_mgr') and self.overlay_mgr and hasattr(self.overlay_mgr, 'sticky_notes_mgr'):
+            self.overlay_mgr.sticky_notes_mgr.toggle_all_visibility()
+
+    def open_sticky_notes_dashboard(self):
+        """Open dashboard and switch to Sticky Notes tab."""
+        self.open_dashboard_requested.emit()
+        self.open_sticky_notes_requested.emit()
+
     def play_activity(self, state: CharacterState, force: bool = True):
         """Request a permitted activity; recovery transitions remain backend-owned."""
         if not force and not self.behavior.activity_enabled(state):
@@ -551,15 +625,24 @@ class InteractionManager(QObject):
         self.open_dashboard_requested.emit()
 
     def shoot_web_at(self, target_pos: QPoint):
-        """Phase 10.3: Shoot a visible web line toward the given point."""
-        hand_x = self.movement.x + (self.movement.width * (0.25 if self.movement.is_facing_left else 0.75))
-        hand_y = self.movement.y + self.movement.height * 0.4
+        """Phase 10.3: Shoot a visible web line toward the given point with THWIP effect."""
+        facing = float(target_pos.x()) < (self.movement.x + self.movement.width * 0.5)
+        self.movement.is_facing_left = facing
+        self.animation.set_facing_left(facing)
+        hand_x = self.movement.x + (self.movement.width * (0.25 if facing else 0.75))
+        hand_y = self.movement.y + self.movement.height * 0.38
         strand = ((hand_x, hand_y), (float(target_pos.x()), float(target_pos.y())))
         self.movement.web_changed.emit(strand)
-        QTimer.singleShot(450, lambda: self.movement.web_changed.emit(None))
+        QTimer.singleShot(480, lambda: self.movement.web_changed.emit(None))
         self._request(C.WAVE)
         if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
-            self.overlay.show_speech_bubble("THWIP!", 1400, "action")
+            thwips = ["THWIP! 🕸️", "THWIP! 🎯", "Gotcha! 🕸️", "Bullseye! 🎯"]
+            self.overlay.show_speech_bubble(random.choice(thwips), 1400, "action")
+
+    def shoot_web_at_cursor(self, cursor_pos: Optional[QPoint] = None):
+        """Shoot a high-velocity web strand toward the mouse cursor with comic THWIP! effect."""
+        target = cursor_pos or QCursor.pos()
+        self.shoot_web_at(target)
 
     def _track_cursor(self):
         if (
@@ -645,21 +728,39 @@ class InteractionManager(QObject):
             self.state_machine.transition_to(C.JUMP, force=True)
             return
 
-        # Normal cursor tracking / following
-        inside = any(region.contains(point) for region in self.movement.regions)
-        radius = max(30, float(self.settings.get('behavior.cursor_radius', 180)))
-        nearby = (inside and (point-center).manhattanLength() < radius
-                  and self.behavior._idle_seconds < float(self.settings.get('behavior.inactivity.relax_seconds', 120)))
+        # 🎯 Mouse Chase / Follow Mode:
+        # Spider-Man actively approaches the mouse cursor while you work
         safe = self.state_machine.current_state in (C.IDLE, C.WALK, C.RUN, C.SIT, C.WAVE)
-        if nearby and safe:
-            if not self._nearby and self.state_machine.current_state in (C.WALK, C.RUN):
-                self.state_machine.transition_to(C.IDLE, force=True)
-            facing = point.x() < center.x()
+        if safe:
+            facing = (point.x() < center_x)
             self.movement.is_facing_left = facing
             self.animation.set_facing_left(facing)
-            if cursor_speed > 1000 and now-self._last_reaction > 12 and random.random() < .2:
-                self._last_reaction = now
-                self._request(C.WAVE)
+
+            if dist_to_pet > 160.0:
+                # Walk/hop towards mouse cursor
+                chase_speed = 135.0 if not is_shift_pressed() else 230.0
+                if self.movement.is_grounded:
+                    self.movement.set_motion('ground', horizontal=(-chase_speed if facing else chase_speed))
+                    if self.state_machine.current_state not in (C.WALK, C.RUN):
+                        self.state_machine.transition_to(C.WALK)
+
+                    # If cursor is high up above Spider-Man, do an acrobatic leap towards it
+                    if to_pet_y > 180 and (now - self._last_follow_jump) > 3.2:
+                        self._last_follow_jump = now
+                        jump_vx = -160.0 if facing else 160.0
+                        self.movement.set_motion("jump", horizontal=jump_vx, vertical=-460.0)
+                        self.state_machine.transition_to(C.JUMP, force=True)
+            else:
+                # Arrived close to cursor: stop and observe
+                if self.movement.is_grounded and self.movement.vx != 0.0:
+                    self.movement.set_motion('ground', horizontal=0.0)
+                if self.state_machine.current_state in (C.WALK, C.RUN):
+                    self.state_machine.transition_to(C.IDLE, force=True)
+                if cursor_speed > 300 and now - self._last_reaction > 8 and random.random() < 0.25:
+                    self._last_reaction = now
+                    self._request(C.WAVE)
+
+        nearby = (dist_to_pet <= 180.0)
         self.behavior.cursor_attention = nearby and safe
         if self._nearby and not nearby:
             self.behavior.resume_autonomy()
@@ -685,10 +786,27 @@ class InteractionManager(QObject):
                 enabled = enabled and room >= self.movement.height*.6
             action.setEnabled(enabled)
             action.triggered.connect(lambda checked=False, state=state: self._request(state))
-        web_act = menu.addAction('🕸️ Shoot Web')
+
+        shoot_cursor_act = menu.addAction('🎯 Shoot Web at Mouse Cursor')
+        shoot_cursor_act.triggered.connect(lambda: self.shoot_web_at_cursor(global_pos))
+        web_act = menu.addAction('🕸️ Shoot Web Here')
         web_act.triggered.connect(lambda: self.shoot_web_at(global_pos))
         tramp_act = menu.addAction('🕸️ Web Trampoline (Spawn below me)')
         tramp_act.triggered.connect(lambda: self.spawn_trampoline_below())
+
+        # Spider Sticky Notes Sub-menu
+        notes_menu = menu.addMenu('📝 Spider Sticky Notes')
+        enable_notes_act = notes_menu.addAction('📌 Enable Sticky Notes')
+        enable_notes_act.setCheckable(True)
+        enable_notes_act.setChecked(bool(self.settings.get('behavior.enable_sticky_notes', True)))
+        enable_notes_act.toggled.connect(lambda enabled: self.settings.set('behavior.enable_sticky_notes', enabled))
+        new_note_act = notes_menu.addAction('➕ Add Sticky Note')
+        new_note_act.triggered.connect(lambda: self.create_desktop_sticky_note(global_pos))
+        toggle_notes_act = notes_menu.addAction('🕸️ Show / Hide Desktop Notes')
+        toggle_notes_act.triggered.connect(lambda: self.toggle_desktop_sticky_notes())
+        dashboard_notes_act = notes_menu.addAction('📋 Open Notes Dashboard')
+        dashboard_notes_act.triggered.connect(lambda: self.open_sticky_notes_dashboard())
+
         if hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
             unpin_act = menu.addAction('📌 Unpin Companion (Resume activities)')
             unpin_act.triggered.connect(lambda: self.behavior.set_pinned(False))
@@ -710,6 +828,21 @@ class InteractionManager(QObject):
             action = size_menu.addAction(label)
             action.triggered.connect(lambda checked=False, height=height: self.settings.set('general.scale', height/200))
         fx_menu = menu.addMenu('⚡ Interactive FX')
+        fling_act = fx_menu.addAction('🚀 Drag-and-Throw (Fling Physics)')
+        fling_act.setCheckable(True)
+        fling_act.setChecked(bool(self.settings.get('behavior.enable_fling_physics', True)))
+        fling_act.toggled.connect(lambda enabled: self.settings.set('behavior.enable_fling_physics', enabled))
+
+        web_cursor_act = fx_menu.addAction('🕸️ Web-Shoot to Cursor (Ctrl+Click)')
+        web_cursor_act.setCheckable(True)
+        web_cursor_act.setChecked(bool(self.settings.get('behavior.enable_web_shoot_cursor', True)))
+        web_cursor_act.toggled.connect(lambda enabled: self.settings.set('behavior.enable_web_shoot_cursor', enabled))
+
+        follow_act = fx_menu.addAction('🎯 Mouse Chase / Follow Mode')
+        follow_act.setCheckable(True)
+        follow_act.setChecked(bool(self.settings.get('behavior.enable_mouse_following', True)))
+        follow_act.toggled.connect(lambda enabled: self.settings.set('behavior.enable_mouse_following', enabled))
+
         dodge_act = fx_menu.addAction('⚡ Spider-Sense Dodging')
         dodge_act.setCheckable(True)
         dodge_act.setChecked(bool(self.settings.get('behavior.enable_spider_sense_dodging', True)))

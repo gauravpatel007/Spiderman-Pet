@@ -3,7 +3,7 @@
 **Date:** October 21, 2026  
 **Auditor / Engineering Lead:** Senior Backend & Frontend Engineer, UI/UX Debugging Expert, QA Lead & Antigravity IDE  
 **Target Environment:** Windows 11 (64-bit) | PySide6 6.12.0 / Qt 6.12.0 | Python 3.13.5 (x64) | Chromium WebEngine | Win32 API Interop  
-**Scope:** Whole Backend Core (`app/`, `core/`, `services/`, `overlay/`, `ui/web_server.py`) & Complete Frontend (`BIN/Frammer UI/`, `ui/web_window.py`)
+**Scope:** Whole Backend Core (`app/`, `core/`, `services/`, `overlay/`, `ui/web_server.py`) & Complete Frontend (`Frontend/`, `ui/web_window.py`)
 
 ---
 

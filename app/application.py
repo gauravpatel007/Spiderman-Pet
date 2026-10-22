@@ -108,6 +108,10 @@ class SpiderBuddyApp(QObject):
         self.interaction_mgr.overlay_mgr = self.overlay_mgr
         self.behavior_ctrl.overlay = self.overlay_mgr.overlay
         self.behavior_ctrl.position_activity = self.overlay_mgr.position_activity
+        if hasattr(self.overlay_mgr, 'sticky_notes_mgr'):
+            self.overlay_mgr.sticky_notes_mgr.set_enabled(
+                bool(self.settings.get('behavior.enable_sticky_notes', True))
+            )
 
         # 7. Initialize UI (Main Window + System Tray)
         if self.settings.get("ui.engine", "web") == "legacy":
@@ -149,6 +153,7 @@ class SpiderBuddyApp(QObject):
 
         # Global Hotkey Service (Win+1..0 / Alt+1..0), WASD Movement, & Spacebar Drop
         self.hotkey_service.activity_triggered.connect(self._on_hotkey_triggered)
+        self.hotkey_service.ctrl_click_triggered.connect(self._on_ctrl_click_web_shoot)
         self.hotkey_service.wasd_input.connect(self.behavior_ctrl.handle_wasd)
         self.hotkey_service.input_blocked = self.main_window.isActiveWindow
         self.hotkey_service.space_pressed.connect(self.behavior_ctrl.drop_to_ground)
@@ -238,6 +243,19 @@ class SpiderBuddyApp(QObject):
         self.main_window.test_sound_requested.connect(self.sound_service.play_test_sound)
         self.main_window.speech_bubble_requested.connect(self.overlay_mgr.overlay.show_speech_bubble)
         self.main_window.mood_preset_changed.connect(self._on_mood_preset_changed)
+
+        # Spider Sticky Notes & Reminders
+        if hasattr(self.interaction_mgr, "open_sticky_notes_requested"):
+            self.interaction_mgr.open_sticky_notes_requested.connect(self._on_open_sticky_notes_requested)
+        if hasattr(self.main_window, "sticky_note_action_received"):
+            self.main_window.sticky_note_action_received.connect(self._on_sticky_note_action)
+
+        # Web-Shoot to Cursor from UI action
+        if hasattr(self.main_window, "shoot_web_cursor_requested"):
+            from PySide6.QtCore import QPoint
+            self.main_window.shoot_web_cursor_requested.connect(
+                lambda x, y: self.interaction_mgr.shoot_web_at_cursor(QPoint(x, y))
+            )
 
     def _on_state_changed_stats(self, old_state, new_state) -> None:
         """Track web swings and acrobatic actions for gameplay statistics."""
@@ -428,6 +446,8 @@ class SpiderBuddyApp(QObject):
         self._on_setting_changed('general.display_fps', self.settings.get('general.display_fps', 0))
         # 3. Apply display mode and start overlay
         self.overlay_mgr.start()
+        if hasattr(self.overlay_mgr, "sticky_notes_mgr") and self.overlay_mgr.sticky_notes_mgr:
+            self.overlay_mgr.sticky_notes_mgr.set_enabled(bool(self.settings.get("behavior.enable_sticky_notes", True)))
 
         # 4. Start behavioral autonomy
         self.behavior_ctrl.start()
@@ -554,6 +574,17 @@ class SpiderBuddyApp(QObject):
                 pass
         self.main_window._character_updated(self.character_mgr.active_character)
 
+    def _on_open_sticky_notes_requested(self) -> None:
+        """Open or focus dashboard and navigate to the Sticky Notes tab."""
+        self.show_main_window()
+        if hasattr(self.main_window, "switch_tab"):
+            self.main_window.switch_tab("Sticky Notes")
+
+    def _on_sticky_note_action(self, data: dict) -> None:
+        """Forward web-originating sticky note changes to the desktop overlay manager."""
+        if hasattr(self.overlay_mgr, "sticky_notes_mgr") and self.overlay_mgr.sticky_notes_mgr:
+            self.overlay_mgr.sticky_notes_mgr.handle_external_sync(data)
+
     def _on_character_changed(self, profile) -> None:
         self.animation_engine.set_character(profile)
         self.behavior_ctrl.set_personality(profile.personality)
@@ -632,6 +663,18 @@ class SpiderBuddyApp(QObject):
         if self.overlay_mgr and self.overlay_mgr.overlay and hasattr(self.overlay_mgr.overlay, "show_speech_bubble"):
             self.overlay_mgr.overlay.show_speech_bubble(quote, 2200, "action")
 
+    def _on_ctrl_click_web_shoot(self) -> None:
+        """Shoot web directly toward mouse cursor when Ctrl + Left Click is pressed globally on desktop."""
+        if (
+            self.settings.get("behavior.enable_web_shoot_cursor", True)
+            and self.overlay_mgr
+            and self.overlay_mgr.overlay
+            and self.overlay_mgr.overlay.isVisible()
+            and not (self.main_window and self.main_window.isActiveWindow())
+        ):
+            from PySide6.QtGui import QCursor
+            self.interaction_mgr.shoot_web_at_cursor(QCursor.pos())
+
     def _on_eye_break_alert(self, title: str, message: str, alert_type: str) -> None:
         """Handle 60-min continuous typing or focus timer completion alert."""
         logger.info("Eye break alert fired: %s - %s (%s)", title, message, alert_type)
@@ -701,6 +744,9 @@ class SpiderBuddyApp(QObject):
             if not value:
                 if hasattr(self.overlay_mgr, 'corner_web_overlay'):
                     self.overlay_mgr.corner_web_overlay.dismiss()
+        elif key == 'behavior.enable_sticky_notes':
+            if hasattr(self.overlay_mgr, 'sticky_notes_mgr'):
+                self.overlay_mgr.sticky_notes_mgr.set_enabled(bool(value))
 
     def shutdown(self) -> None:
         """Perform orderly cleanup and termination."""

@@ -66,6 +66,8 @@ class HotkeyService(QObject):
     wasd_input = Signal(float, float, bool)
     # Emits when spacebar is pressed to drop to ground
     space_pressed = Signal()
+    # Emits when global Ctrl + Click occurs anywhere on desktop to shoot web
+    ctrl_click_triggered = Signal()
 
     def __init__(self, check_interval_ms: int = 25, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -75,6 +77,8 @@ class HotkeyService(QObject):
         self._wasd_active = False
         self.input_blocked = lambda: False
         self._space_down = False
+        self._ctrl_mouse_down = False
+        self._last_ctrl_shoot_time = 0.0
         self._require_modifier = False  # False: direct 1..0 keys trigger animations!
         self._key_down_states: Dict[int, bool] = {vk: False for vk in VK_NUM_MAP}
         self._last_trigger_time = 0.0
@@ -240,6 +244,19 @@ class HotkeyService(QObject):
                 if is_space and not self._space_down:
                     self.space_pressed.emit()
                 self._space_down = is_space
+
+            # 4. Global Ctrl + Left Click: shoot web directly to cursor anywhere on desktop
+            is_ctrl = bool(user32.GetAsyncKeyState(VK_CTRL) & 0x8000)
+            is_lbutton = bool(user32.GetAsyncKeyState(0x01) & 0x8000)
+            if is_ctrl and is_lbutton:
+                if not self._ctrl_mouse_down:
+                    self._ctrl_mouse_down = True
+                    now = time.monotonic()
+                    if (now - self._last_ctrl_shoot_time) >= 0.4:
+                        self._last_ctrl_shoot_time = now
+                        self.ctrl_click_triggered.emit()
+            else:
+                self._ctrl_mouse_down = False
 
         except Exception as exc:
             logger.debug("Error polling hotkey state: %s", exc)

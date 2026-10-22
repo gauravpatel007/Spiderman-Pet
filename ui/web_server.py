@@ -8,6 +8,7 @@ import re
 import socketserver
 import sys
 import threading
+import time
 import urllib.parse
 from pathlib import Path
 from typing import Callable, Optional
@@ -90,12 +91,33 @@ class SpiderWebHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_app_settings()
             return
 
+        # 13. API: User Profile JSON
+        if self.path.startswith("/api/user_profile"):
+            self._handle_user_profile_get()
+            return
+
+        # 14. API: Bin (Removed Characters) JSON
+        if self.path.startswith("/api/bin/characters"):
+            self._handle_bin_characters_list()
+            return
+
+        # 15. API: Custom Profile Avatars list
+        if self.path.startswith("/api/custom_avatars"):
+            self._handle_custom_avatars_get()
+            return
+
+        # 16. API: Sticky Notes list
+        if self.path.startswith("/api/sticky_notes"):
+            self._handle_sticky_notes_get()
+            return
+
         # 7. Main HTML entry point & SPA deep link navigation fallback
         clean_path = self.path.split("?")[0].rstrip("/")
         SPA_ROUTES = {
             "", "/index", "/index.html", "/home", "/characters", "/activities",
             "/desktop", "/desktop-apps", "/desktop_apps", "/focus",
-            "/focus-breaks", "/focus_breaks", "/controls", "/settings"
+            "/focus-breaks", "/focus_breaks", "/controls", "/settings",
+            "/profile", "/my-profile", "/bin", "/notes", "/sticky-notes", "/sticky_notes"
         }
         target_file = Path(self.directory) / clean_path.lstrip("/")
         if clean_path in SPA_ROUTES or (not clean_path.startswith("/api/") and "." not in clean_path.split("/")[-1] and not target_file.exists()):
@@ -137,6 +159,21 @@ class SpiderWebHandler(http.server.SimpleHTTPRequestHandler):
             return
         if self.path.startswith("/api/action"):
             self._handle_api_action()
+            return
+        if self.path.startswith("/api/user_profile"):
+            self._handle_user_profile_post()
+            return
+        if self.path.startswith("/api/bin/"):
+            self._handle_bin_post()
+            return
+        if self.path.startswith("/api/upload_profile_avatar"):
+            self._handle_upload_profile_avatar()
+            return
+        if self.path.startswith("/api/delete_profile_avatar"):
+            self._handle_delete_profile_avatar()
+            return
+        if self.path.startswith("/api/sticky_notes"):
+            self._handle_sticky_notes_post()
             return
         self.send_error(404, "Endpoint not found")
 
@@ -417,6 +454,553 @@ class SpiderWebHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
+    def _get_bin_file(self) -> Path:
+        root = Path(__file__).resolve().parent.parent
+        config_dir = root / "config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return config_dir / "bin_characters.json"
+
+    def _get_profile_file(self) -> Path:
+        root = Path(__file__).resolve().parent.parent
+        config_dir = root / "config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return config_dir / "user_profile.json"
+
+    def _load_bin_characters(self) -> list:
+        bin_file = self._get_bin_file()
+        if bin_file.exists():
+            try:
+                data = json.loads(bin_file.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    return data
+            except Exception as e:
+                logger.warning(f"Error reading bin characters: {e}")
+        # Default seed
+        default_seed = [
+            {
+                "id": "spider_2099",
+                "name": "Spider-Man 2099",
+                "display_name": "Spider-Man 2099 (Miguel O'Hara)",
+                "suit": "Nueva York 2099 Suit",
+                "description": "Earth-928 high-tech nano-weave suit with talons and accelerated vision.",
+                "avatar": "images/spiderman_brand_icon.png",
+                "preview_url": "images/spiderman_brand_icon.png",
+                "removed_at": "2026-10-21T16:45:00Z",
+                "removed_date_str": "Oct 21, 2026 • 04:45 PM"
+            },
+            {
+                "id": "symbiote_classic",
+                "name": "Symbiote Spider-Man",
+                "display_name": "Symbiote Peter Parker",
+                "suit": "Alien Symbiote Black Suit",
+                "description": "Alien symbiote suit with liquid web shooters and shapeshifting tendrils.",
+                "avatar": "images/spiderman_avatar_brand.png",
+                "preview_url": "images/spiderman_avatar_brand.png",
+                "removed_at": "2026-10-21T17:15:00Z",
+                "removed_date_str": "Oct 21, 2026 • 05:15 PM"
+            }
+        ]
+        try:
+            bin_file.write_text(json.dumps(default_seed, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+        return default_seed
+
+    def _save_bin_characters(self, data: list):
+        bin_file = self._get_bin_file()
+        bin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    def _handle_bin_characters_list(self):
+        """Return list of removed characters stored in Bin."""
+        data = self._load_bin_characters()
+        payload = json.dumps(data).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_bin_post(self):
+        """Handle Bin actions: add, restore, delete, empty."""
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b""
+            data = json.loads(body.decode("utf-8")) if body else {}
+        except Exception:
+            data = {}
+
+        path = self.path.rstrip("/")
+        bin_list = self._load_bin_characters()
+
+        if path.endswith("/restore"):
+            cid = data.get("character_id")
+            restored = None
+            if cid:
+                for idx, c in enumerate(bin_list):
+                    if c.get("id") == cid:
+                        restored = bin_list.pop(idx)
+                        break
+                self._save_bin_characters(bin_list)
+            resp = {"status": "ok", "restored": restored}
+        elif path.endswith("/delete"):
+            cid = data.get("character_id")
+            if cid:
+                bin_list = [c for c in bin_list if c.get("id") != cid]
+                self._save_bin_characters(bin_list)
+            resp = {"status": "ok", "deleted": cid}
+        elif path.endswith("/empty"):
+            self._save_bin_characters([])
+            resp = {"status": "ok", "cleared": True}
+        elif path.endswith("/add"):
+            char = data.get("character", data)
+            if isinstance(char, dict) and char.get("id"):
+                bin_list = [c for c in bin_list if c.get("id") != char.get("id")]
+                bin_list.insert(0, char)
+                self._save_bin_characters(bin_list)
+            resp = {"status": "ok", "added": char}
+        else:
+            self.send_error(404, "Unknown bin endpoint")
+            return
+
+        payload = json.dumps(resp).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_user_profile_get(self):
+        """Return user profile data as JSON."""
+        prof_file = self._get_profile_file()
+        data = {
+            "name": "Peter Parker",
+            "callsign": "Spider-Operative",
+            "rank": "Level 7 Companion Master",
+            "bio": "With great power comes great responsibility. Balancing desktop productivity with web-slinging acrobatics.",
+            "avatar": "images/spiderman_brand_icon.png",
+            "custom_avatars": []
+        }
+        if prof_file.exists():
+            try:
+                data = json.loads(prof_file.read_text(encoding="utf-8"))
+            except Exception as e:
+                logger.warning(f"Error reading user profile: {e}")
+
+        if "custom_avatars" not in data or not isinstance(data["custom_avatars"], list):
+            data["custom_avatars"] = []
+
+        # Scan custom_avatars directory to include all persisted image files
+        root = Path(__file__).resolve().parent.parent
+        custom_dir = root / "Frontend" / "images" / "custom_avatars"
+        if custom_dir.is_dir():
+            for f in sorted(custom_dir.iterdir()):
+                if f.is_file() and f.suffix.lower() in [".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+                    rel = f"images/custom_avatars/{f.name}"
+                    if rel not in data["custom_avatars"]:
+                        data["custom_avatars"].append(rel)
+
+        payload = json.dumps(data).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_custom_avatars_get(self):
+        """Return list of all custom uploaded profile avatars."""
+        prof_file = self._get_profile_file()
+        custom_list = []
+        if prof_file.exists():
+            try:
+                curr = json.loads(prof_file.read_text(encoding="utf-8"))
+                custom_list = curr.get("custom_avatars", [])
+            except Exception:
+                pass
+
+        root = Path(__file__).resolve().parent.parent
+        custom_dir = root / "Frontend" / "images" / "custom_avatars"
+        if custom_dir.is_dir():
+            for f in sorted(custom_dir.iterdir()):
+                if f.is_file() and f.suffix.lower() in [".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+                    rel = f"images/custom_avatars/{f.name}"
+                    if rel not in custom_list:
+                        custom_list.append(rel)
+
+        payload = json.dumps({"status": "ok", "custom_avatars": custom_list}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_upload_profile_avatar(self):
+        """Upload and save a custom profile avatar image."""
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b""
+            data = json.loads(body.decode("utf-8")) if body else {}
+        except Exception as e:
+            self.send_error(400, f"Malformed upload payload: {e}")
+            return
+
+        image_data = data.get("image_data", "")
+        filename = data.get("filename", "")
+        if not image_data:
+            self.send_error(400, "Missing image_data")
+            return
+
+        import base64
+        import time
+        if "," in image_data:
+            header, b64_data = image_data.split(",", 1)
+        else:
+            b64_data = image_data
+
+        try:
+            raw_bytes = base64.b64decode(b64_data)
+        except Exception as e:
+            self.send_error(400, f"Invalid base64 encoding: {e}")
+            return
+
+        ext = ".png"
+        if filename:
+            _, orig_ext = os.path.splitext(filename)
+            if orig_ext.lower() in [".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+                ext = orig_ext.lower()
+
+        root = Path(__file__).resolve().parent.parent
+        custom_dir = root / "Frontend" / "images" / "custom_avatars"
+        custom_dir.mkdir(parents=True, exist_ok=True)
+
+        unique_id = f"custom_dp_{int(time.time()*1000)}"
+        save_filename = f"{unique_id}{ext}"
+        target_path = custom_dir / save_filename
+
+        try:
+            target_path.write_bytes(raw_bytes)
+        except Exception as e:
+            logger.error(f"Failed to write custom avatar: {e}")
+            self.send_error(500, f"Failed to save image file: {e}")
+            return
+
+        rel_url = f"images/custom_avatars/{save_filename}"
+
+        prof_file = self._get_profile_file()
+        curr = {}
+        if prof_file.exists():
+            try:
+                curr = json.loads(prof_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+        custom_list = curr.get("custom_avatars", [])
+        if rel_url not in custom_list:
+            custom_list.append(rel_url)
+        curr["custom_avatars"] = custom_list
+        curr["avatar"] = rel_url
+        prof_file.write_text(json.dumps(curr, indent=2), encoding="utf-8")
+
+        payload = json.dumps({
+            "status": "ok",
+            "url": rel_url,
+            "id": unique_id,
+            "custom_avatars": custom_list,
+            "avatar": rel_url
+        }).encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_delete_profile_avatar(self):
+        """Delete an uploaded custom profile avatar (default presets cannot be deleted)."""
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b""
+            data = json.loads(body.decode("utf-8")) if body else {}
+        except Exception as e:
+            self.send_error(400, f"Malformed delete payload: {e}")
+            return
+
+        target_url = (data.get("url") or "").strip()
+        if not target_url:
+            self.send_error(400, "Missing url to delete")
+            return
+
+        DEFAULT_PRESETS = [
+            "images/spiderman_brand_icon.png",
+            "images/miles_brand_avatar.jpg",
+            "images/amazing_spiderman_face.jpg",
+            "images/spiderman_avatar_brand.png"
+        ]
+        if target_url in DEFAULT_PRESETS:
+            self.send_error(403, "Default preset avatars cannot be deleted.")
+            return
+
+        root = Path(__file__).resolve().parent.parent
+        custom_dir = (root / "Frontend" / "images" / "custom_avatars").resolve()
+
+        file_name = Path(target_url).name
+        target_file = (custom_dir / file_name).resolve()
+        if target_file.is_file() and target_file.is_relative_to(custom_dir):
+            try:
+                target_file.unlink()
+            except Exception as e:
+                logger.warning(f"Could not delete avatar file {target_file}: {e}")
+
+        prof_file = self._get_profile_file()
+        curr = {}
+        if prof_file.exists():
+            try:
+                curr = json.loads(prof_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+        custom_list = curr.get("custom_avatars", [])
+        custom_list = [u for u in custom_list if u != target_url and Path(u).name != file_name]
+        curr["custom_avatars"] = custom_list
+
+        if curr.get("avatar") == target_url or Path(curr.get("avatar", "")).name == file_name:
+            curr["avatar"] = "images/spiderman_brand_icon.png"
+
+        prof_file.write_text(json.dumps(curr, indent=2), encoding="utf-8")
+
+        payload = json.dumps({
+            "status": "ok",
+            "custom_avatars": custom_list,
+            "avatar": curr.get("avatar")
+        }).encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_user_profile_post(self):
+        """Update user profile preferences and data."""
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b""
+            data = json.loads(body.decode("utf-8")) if body else {}
+        except Exception as e:
+            self.send_error(400, f"Malformed profile payload: {e}")
+            return
+
+        prof_file = self._get_profile_file()
+        curr = {}
+        if prof_file.exists():
+            try:
+                curr = json.loads(prof_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        curr.update(data)
+        prof_file.write_text(json.dumps(curr, indent=2), encoding="utf-8")
+
+        payload = json.dumps({"status": "ok", "profile": curr}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _get_sticky_notes_file(self) -> Path:
+        root = Path(__file__).resolve().parent.parent
+        config_dir = root / "config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return config_dir / "sticky_notes.json"
+
+    def _load_sticky_notes(self) -> list:
+        notes_file = self._get_sticky_notes_file()
+        if notes_file.exists():
+            try:
+                data = json.loads(notes_file.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    return data
+            except Exception as e:
+                logger.warning(f"Error loading sticky notes: {e}")
+        return []
+
+    def _save_sticky_notes(self, data: list):
+        notes_file = self._get_sticky_notes_file()
+        notes_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    def _handle_sticky_notes_get(self):
+        notes = self._load_sticky_notes()
+        payload = json.dumps({"status": "ok", "notes": notes}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_sticky_notes_post(self):
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b""
+            req = json.loads(body.decode("utf-8")) if body else {}
+        except Exception as e:
+            self.send_error(400, f"Malformed JSON: {e}")
+            return
+
+        action = req.get("action", "save")
+        notes = self._load_sticky_notes()
+        now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+        if action in ("create", "add"):
+            note_data = req.get("note") or req
+            new_id = note_data.get("id") or f"note_{int(time.time()*1000)}"
+            raw_color = note_data.get("color") or note_data.get("color_theme") or "spidey_red"
+            raw_pinned = note_data.get("pinned") if "pinned" in note_data else note_data.get("is_pinned", True)
+            raw_items = note_data.get("items") or note_data.get("tasks") or []
+            normalized_items = []
+            for it in raw_items:
+                if isinstance(it, dict):
+                    normalized_items.append({
+                        "id": it.get("id") or f"item_{int(time.time()*1000)}_{len(normalized_items)}",
+                        "text": it.get("text") or "",
+                        "done": bool(it.get("done") or it.get("completed", False))
+                    })
+                elif isinstance(it, str):
+                    normalized_items.append({
+                        "id": f"item_{int(time.time()*1000)}_{len(normalized_items)}",
+                        "text": it,
+                        "done": False
+                    })
+
+            new_note = {
+                "id": new_id,
+                "title": note_data.get("title") or "Spider Mission Note",
+                "color": raw_color,
+                "content": note_data.get("content") or "",
+                "items": normalized_items,
+                "pinned": bool(raw_pinned),
+                "desktop_visible": bool(note_data.get("desktop_visible", True)),
+                "pos_x": int(note_data.get("pos_x", note_data.get("x", 320 + (len(notes) % 4) * 40))),
+                "pos_y": int(note_data.get("pos_y", note_data.get("y", 80 + (len(notes) % 3) * 30))),
+                "width": int(note_data.get("width", 280)),
+                "height": int(note_data.get("height", 320)),
+                "minimized": bool(note_data.get("minimized", False)),
+                "created_at": now_iso,
+                "updated_at": now_iso
+            }
+            notes.insert(0, new_note)
+            self._save_sticky_notes(notes)
+            resp = {"status": "ok", "action": "created", "note": new_note, "notes": notes}
+
+            if self.server_instance and self.server_instance.action_callback:
+                self.server_instance.action_callback({"action": "sticky_note_sync", "subaction": "create", "note": new_note})
+
+        elif action == "update":
+            note_id = req.get("id") or (req.get("note") and req["note"].get("id"))
+            updated_note = None
+            if note_id:
+                for idx, n in enumerate(notes):
+                    if n.get("id") == note_id:
+                        patch = req.get("note", req)
+                        for k, v in patch.items():
+                            if k not in ("id", "created_at", "action"):
+                                if k == "color_theme":
+                                    n["color"] = v
+                                elif k == "is_pinned":
+                                    n["pinned"] = bool(v)
+                                elif k == "tasks":
+                                    norm = []
+                                    for t in v:
+                                        if isinstance(t, dict):
+                                            norm.append({
+                                                "id": t.get("id") or f"item_{len(norm)}",
+                                                "text": t.get("text", ""),
+                                                "done": bool(t.get("done") or t.get("completed", False))
+                                            })
+                                    n["items"] = norm
+                                elif k == "x":
+                                    n["pos_x"] = int(v)
+                                elif k == "y":
+                                    n["pos_y"] = int(v)
+                                else:
+                                    n[k] = v
+                        n["updated_at"] = now_iso
+                        updated_note = n
+                        break
+                self._save_sticky_notes(notes)
+            resp = {"status": "ok", "action": "updated", "note": updated_note, "notes": notes}
+
+            if self.server_instance and self.server_instance.action_callback:
+                self.server_instance.action_callback({"action": "sticky_note_sync", "subaction": "update", "note": updated_note})
+
+        elif action == "delete":
+            note_id = req.get("id")
+            if note_id:
+                notes = [n for n in notes if n.get("id") != note_id]
+                self._save_sticky_notes(notes)
+            resp = {"status": "ok", "action": "deleted", "id": note_id, "notes": notes}
+
+            if self.server_instance and self.server_instance.action_callback:
+                self.server_instance.action_callback({"action": "sticky_note_sync", "subaction": "delete", "id": note_id})
+
+        elif action == "toggle_item":
+            note_id = req.get("id") or req.get("note_id")
+            item_id = req.get("item_id")
+            item_index = req.get("item_index")
+            if note_id:
+                for n in notes:
+                    if n.get("id") == note_id:
+                        items = n.get("items", [])
+                        if item_id:
+                            for it in items:
+                                if it.get("id") == item_id:
+                                    it["done"] = not it.get("done", False)
+                                    break
+                        elif item_index is not None and 0 <= int(item_index) < len(items):
+                            items[int(item_index)]["done"] = not items[int(item_index)].get("done", False)
+                        n["updated_at"] = now_iso
+                        break
+                self._save_sticky_notes(notes)
+            resp = {"status": "ok", "action": "toggle_item", "notes": notes}
+
+            if self.server_instance and self.server_instance.action_callback:
+                self.server_instance.action_callback({"action": "sticky_note_sync", "subaction": "update_item", "note_id": note_id, "item_id": item_id})
+
+        elif action == "save_all":
+            all_notes = req.get("notes")
+            if isinstance(all_notes, list):
+                notes = all_notes
+                self._save_sticky_notes(notes)
+            resp = {"status": "ok", "action": "saved_all", "notes": notes}
+
+            if self.server_instance and self.server_instance.action_callback:
+                self.server_instance.action_callback({"action": "sticky_note_sync", "subaction": "reload"})
+
+        elif action in ("spawn_desktop", "toggle_desktop"):
+            note_id = req.get("id")
+            target_note = None
+            for n in notes:
+                if n.get("id") == note_id:
+                    if action == "toggle_desktop":
+                        n["desktop_visible"] = not n.get("desktop_visible", False)
+                    else:
+                        n["desktop_visible"] = True
+                    n["updated_at"] = now_iso
+                    target_note = n
+                    break
+            self._save_sticky_notes(notes)
+            resp = {"status": "ok", "action": action, "note": target_note, "notes": notes}
+
+            if self.server_instance and self.server_instance.action_callback:
+                self.server_instance.action_callback({"action": "sticky_note_sync", "subaction": "toggle_desktop", "note": target_note})
+        else:
+            resp = {"status": "error", "message": f"Unknown action: {action}"}
+
+        payload = json.dumps(resp).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
     def log_message(self, format, *args):
         # Suppress routine GET logging unless in DEBUG mode
         if logger.isEnabledFor(logging.DEBUG):
@@ -428,7 +1012,19 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
 
 
-from PySide6.QtCore import QObject, Signal
+try:
+    from PySide6.QtCore import QObject, Signal
+except ImportError:
+    class QObject:
+        def __init__(self, parent=None):
+            pass
+    def Signal(*args, **kwargs):
+        class _MockSignal:
+            def emit(self, *a, **kw):
+                pass
+            def connect(self, *a, **kw):
+                pass
+        return _MockSignal()
 
 class WebServer(QObject):
     """Manages the background HTTP server for Framer UI with thread-safe Qt signals."""
@@ -438,12 +1034,20 @@ class WebServer(QObject):
     def __init__(self, directory: Optional[str] = None, parent: Optional[QObject] = None):
         super().__init__(parent)
         if directory is None:
-            # Default to BIN/Frammer UI in project root or frozen MEIPASS
+            # Default to Frontend in project root or frozen MEIPASS (fallback to legacy BIN/Frammer UI)
             if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-                directory = str(Path(sys._MEIPASS) / "BIN" / "Frammer UI")
+                base_dir = Path(sys._MEIPASS)
             else:
-                root = Path(__file__).resolve().parent.parent
-                directory = str(root / "BIN" / "Frammer UI")
+                base_dir = Path(__file__).resolve().parent.parent
+
+            frontend_dir = base_dir / "Frontend"
+            bin_dir = base_dir / "BIN" / "Frammer UI"
+            if frontend_dir.exists():
+                directory = str(frontend_dir)
+            elif bin_dir.exists():
+                directory = str(bin_dir)
+            else:
+                directory = str(frontend_dir)
 
         self.directory = os.path.abspath(directory)
         self.port: int = 0

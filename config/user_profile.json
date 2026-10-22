@@ -1,0 +1,24 @@
+{
+  "name": "Peter Parker",
+  "callsign": "Spider-Buddy",
+  "rank": "Level 7 Companion Master",
+  "bio": "With great power comes great responsibility. Balancing desktop productivity with web-slinging acrobatics.",
+  "avatar": "images/custom_avatars/custom_dp_1792662771098.jpg",
+  "member_since": "October 2026",
+  "device": "Windows Desktop (Local Workstation)",
+  "settings": {
+    "sfx_enabled": true,
+    "voice_pings": true,
+    "auto_perch_editors": true,
+    "battery_saver_fps": true
+  },
+  "stats": {
+    "total_uptime_minutes": 1122,
+    "focus_sessions_completed": 14,
+    "acrobatics_dispatched": 76,
+    "harmony_percent": 98
+  },
+  "custom_avatars": [
+    "images/custom_avatars/custom_dp_1792662771098.jpg"
+  ]
+}
