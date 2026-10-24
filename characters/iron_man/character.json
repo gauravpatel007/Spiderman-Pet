@@ -1,0 +1,52 @@
+{
+  "id": "iron_man",
+  "name": "IRON MAN",
+  "display_name": "IRON MAN",
+  "suit": "IRON MAN Suit",
+  "version": "1.0.0",
+  "description": "Queens' tech-savvy Peter Parker with high-tech webbing and expressive Stark optics.",
+  "base_size": [
+    512,
+    512
+  ],
+  "scale_factor": 1.0,
+  "theme_colors": {
+    "primary": "#D91424",
+    "secondary": "#0A2540",
+    "accent": "#F5A623",
+    "web": "#FFFFFF"
+  },
+  "physics": {
+    "walk_speed": 3.2,
+    "run_speed": 5.8,
+    "jump_force": -11.5,
+    "climb_speed": 2.4,
+    "gravity": 0.6
+  },
+  "supported_animations": [
+    "idle",
+    "walk",
+    "run",
+    "jump",
+    "fall",
+    "land",
+    "climb_up",
+    "climb_down",
+    "wall_slide",
+    "perch",
+    "swing",
+    "hang",
+    "sleep",
+    "interact",
+    "dragged",
+    "wake_up",
+    "sit",
+    "stand_up",
+    "wave",
+    "dance",
+    "celebrate"
+  ],
+  "personality": "tom_holland",
+  "custom_character": true,
+  "animation_source": "imported_artwork"
+}

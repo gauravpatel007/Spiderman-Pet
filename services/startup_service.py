@@ -20,14 +20,21 @@ class StartupService:
 
     @classmethod
     def get_executable_command(cls) -> str:
-        """Return the executable or python command to launch Spider-Buddy."""
+        """Return the executable or python command to launch Spider-Buddy without a console window."""
         if getattr(sys, "frozen", False):
             # Built with PyInstaller
             return f'"{sys.executable}"'
         else:
-            # Running as Python script
+            # Running as Python script: prefer pythonw.exe to prevent terminal/console window
+            exec_dir = os.path.dirname(sys.executable)
+            pythonw = os.path.join(exec_dir, "pythonw.exe")
+            if not os.path.isfile(pythonw):
+                if os.path.isfile(r"C:\Program Files\Python313\pythonw.exe"):
+                    pythonw = r"C:\Program Files\Python313\pythonw.exe"
+                else:
+                    pythonw = sys.executable
             main_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "main.py"))
-            return f'"{sys.executable}" "{main_script}"'
+            return f'"{pythonw}" "{main_script}"'
 
     @classmethod
     def is_startup_enabled(cls) -> bool:

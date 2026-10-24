@@ -647,6 +647,9 @@ class SpiderBuddyApp(QObject):
             self.settings.set('general.hidden', False)
             self.overlay_mgr._on_visibility_changed(True)
         self.interaction_mgr.play_activity(state, force=force)
+        if name in ("title_hang", "title_perch"):
+            if hasattr(self.behavior_ctrl, "set_pinned"):
+                self.behavior_ctrl.set_pinned(True, keep_state=True)
         return True
 
     def _on_state_sound(self, old, new):
@@ -660,6 +663,9 @@ class SpiderBuddyApp(QObject):
             self.behavior_ctrl.set_pinned(False)
         if not self._play_activity(action_name):
             return
+        if action_name in ("title_hang", "title_perch"):
+            if hasattr(self.behavior_ctrl, "set_pinned"):
+                self.behavior_ctrl.set_pinned(True, keep_state=True)
         if self.overlay_mgr and self.overlay_mgr.overlay and hasattr(self.overlay_mgr.overlay, "show_speech_bubble"):
             self.overlay_mgr.overlay.show_speech_bubble(quote, 2200, "action")
 

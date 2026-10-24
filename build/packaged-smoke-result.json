@@ -1,6 +1,0 @@
-{
-  "executable_startup": false,
-  "alive_after_startup": true,
-  "traceback": false,
-  "shutdown": "test harness termination; graceful shutdown verified in source tests"
-}

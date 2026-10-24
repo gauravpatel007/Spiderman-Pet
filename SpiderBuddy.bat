@@ -7,15 +7,15 @@
 setlocal
 cd /d "%~dp0"
 
-:: Check for pythonw in standard path or Python 3.13 location
-where pythonw.exe >nul 2>&1
-if %ERRORLEVEL% equ 0 (
-    start "" pythonw.exe main.py
+:: Check Python 3.13 location where dependencies are installed, then PATH
+if exist "C:\Program Files\Python313\pythonw.exe" (
+    start "" "C:\Program Files\Python313\pythonw.exe" main.py
     exit /b 0
 )
 
-if exist "C:\Program Files\Python313\pythonw.exe" (
-    start "" "C:\Program Files\Python313\pythonw.exe" main.py
+where pythonw.exe >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    start "" pythonw.exe main.py
     exit /b 0
 )
 

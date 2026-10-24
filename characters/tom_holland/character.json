@@ -1,7 +1,7 @@
 {
   "id": "tom_holland",
   "name": "Tom Holland Spider-Man",
-  "display_name": "🕸️ Tom Holland",
+  "display_name": "\ud83d\udd78\ufe0f Tom Holland",
   "suit": "Integrated Red, Blue & Gold Stark Suit",
   "version": "1.0.0",
   "description": "Queens' tech-savvy Peter Parker with high-tech webbing and expressive Stark optics.",
@@ -44,6 +44,8 @@
     "stand_up",
     "wave",
     "dance",
-    "celebrate"
+    "celebrate",
+    "title_hang",
+    "title_perch"
   ]
 }

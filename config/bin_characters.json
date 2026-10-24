@@ -1,5 +1,16 @@
 [
   {
+    "id": "deadpool",
+    "name": "deadpool",
+    "display_name": "deadpool",
+    "suit": "deadpool Suit",
+    "description": "Queens' tech-savvy Peter Parker with high-tech webbing and expressive Stark optics.",
+    "avatar": "/api/character_image/deadpool.png",
+    "preview_url": "/api/character_image/deadpool.png",
+    "removed_at": "2026-10-22T17:41:49.386Z",
+    "removed_date_str": "Oct 22, 2026, 11:11 PM"
+  },
+  {
     "id": "symbiote_classic",
     "name": "Symbiote Spider-Man",
     "display_name": "Symbiote Peter Parker",

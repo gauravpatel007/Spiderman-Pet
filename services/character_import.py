@@ -9,23 +9,20 @@ from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageOps
 from scripts.build_articulated_assets import pose
+from services.background_remover import auto_remove_background
 
 
-def load_artwork(path):
+def load_artwork(path, progress_callback=None):
     with Image.open(path) as opened:
         image = ImageOps.exif_transpose(opened).convert('RGBA')
     image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-    # Remove only white connected to an outer edge; retain enclosed white lenses.
-    if image.getchannel('A').getextrema()[0] == 255:
-        white = image.convert('RGB').convert('L').point(lambda p: 255 if p > 235 else 0)
-        mask = Image.new('L', (image.width+2, image.height+2), 255)
-        mask.paste(white, (1, 1))
-        ImageDraw.floodfill(mask, (0, 0), 128)
-        background = mask.crop((1, 1, image.width+1, image.height+1)).point(lambda p: 255 if p == 128 else 0)
-        image.putalpha(ImageChops.subtract(image.getchannel('A'), background))
+    
+    # Automatically remove any solid, gradient, or complex background
+    image = auto_remove_background(image, progress_callback=progress_callback)
+    
     box = image.getchannel('A').getbbox()
     if not box:
-        raise ValueError('Artwork is empty after background removal. Use a transparent character PNG.')
+        raise ValueError('Artwork is empty after background removal. Use a character image with a distinct background.')
     image = image.crop(box)
     image.thumbnail((400, 440), Image.Resampling.LANCZOS)
     canvas = Image.new('RGBA', (512, 512))
@@ -35,7 +32,7 @@ def load_artwork(path):
 
 def build_artwork_clips(root, artwork, template, progress_callback=None):
     """Use a conservative cutout rig; never substitute template character pixels."""
-    source = load_artwork(artwork)
+    source = load_artwork(artwork, progress_callback=progress_callback)
     (root/'sprites').mkdir(exist_ok=True)
     source.save(root/'sprites'/'idle.png', compress_level=1)
     x0, y0, x1, y1 = source.getbbox()
@@ -43,11 +40,15 @@ def build_artwork_clips(root, artwork, template, progress_callback=None):
     head = round(y0+h*.43)
     hip = round(y0+h*.73)
     left, right, center = round(x0+w*.28), round(x0+w*.72), round((x0+x1)/2)
+    pad_y = max(8, round(h * 0.035))
+    pad_x = max(6, round(w * 0.035))
     rectangles = {
-        'head': (x0, y0, x1, head),
-        'torso': (left, head, right, hip),
-        'arm_left': (x0, head, left, hip), 'arm_right': (right, head, x1, hip),
-        'leg_left': (x0, hip, center, y1), 'leg_right': (center, hip, x1, y1),
+        'head': (x0, y0, x1, min(y1, head + pad_y)),
+        'torso': (max(x0, left - pad_x), max(y0, head - pad_y), min(x1, right + pad_x), min(y1, hip + pad_y)),
+        'arm_left': (x0, max(y0, head - pad_y), min(x1, left + pad_x), hip),
+        'arm_right': (max(x0, right - pad_x), max(y0, head - pad_y), x1, hip),
+        'leg_left': (x0, max(y0, hip - pad_y), min(x1, center + pad_x), y1),
+        'leg_right': (max(x0, center - pad_x), max(y0, hip - pad_y), x1, y1),
     }
     parts, rig = {}, {'eyes': [], 'lid': '#202329'}
     for name, box in rectangles.items():
@@ -110,7 +111,7 @@ def create_character(destination_root, template_root, cid, name, suit, artwork=N
     try:
         if artwork:
             if progress_callback:
-                progress_callback(10, 'Processing custom artwork...')
+                progress_callback(5, 'Detecting and removing background...')
             supported = build_artwork_clips(stage, artwork, template, progress_callback=progress_callback)
         else:
             if progress_callback:

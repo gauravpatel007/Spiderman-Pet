@@ -1110,6 +1110,34 @@
         "animations/perch/frame_00.png"
       ],
       "source": "animations/perch/frame_00.png"
+    },
+    "hang": {
+      "fps": 12,
+      "loop": true,
+      "direction": "right",
+      "mirror_allowed": false,
+      "anchor": [
+        256,
+        488
+      ],
+      "frames": [
+        "animations/hang/frame_00.png"
+      ],
+      "source": "animations/hang/frame_00.png"
+    },
+    "title_hang": {
+      "fps": 12,
+      "loop": true,
+      "direction": "right",
+      "mirror_allowed": false,
+      "anchor": [
+        256,
+        488
+      ],
+      "frames": [
+        "animations/title_hang/frame_00.png"
+      ],
+      "source": "animations/title_hang/frame_00.png"
     }
   }
 }

@@ -25,13 +25,17 @@ class MockMovement:
         self.orientations = []
 
         class Signal:
-            def __init__(self, callback):
-                self._cb = callback
-            def emit(self, val):
-                self._cb(val)
+            def __init__(self, callback=None):
+                self._cbs = [callback] if callback else []
+            def connect(self, cb):
+                self._cbs.append(cb)
+            def emit(self, *args):
+                for cb in self._cbs:
+                    cb(*args)
 
         self.web_changed = Signal(lambda s: self.web_history.append(s))
         self.orientation_changed = Signal(lambda o: self.orientations.append(o))
+        self.boundary_hit = Signal()
 
     def set_motion(self, mode, vx=0.0, vy=0.0):
         self.mode = mode
@@ -322,6 +326,149 @@ class TestTitleHangDragLogic(unittest.TestCase):
         sm.transition_to(C.TITLE_HANG, force=True)
         bc._decide_next_action()
         self.assertEqual(sm.current_state, C.TITLE_HANG, "Autonomy must keep Spider-Man in TITLE_HANG!")
+
+    def test_key_6_and_7_pin_state_and_prevent_autonomous_change(self):
+        from core.state_machine import StateMachine, CharacterState as C
+        from core.movement_controller import MovementController
+        from core.behavior_controller import BehaviorController
+        from core.interaction_manager import InteractionManager
+        from unittest.mock import MagicMock
+
+        sm = StateMachine(initial_state=C.IDLE)
+        movement = MovementController()
+        anim = MagicMock()
+        anim.has_animation.return_value = True
+
+        bc = BehaviorController(sm, movement, anim)
+        bc._is_active = True
+        bc.position_activity = lambda name: True
+        im = InteractionManager(sm, movement, None, animation=anim, behavior=bc)
+
+        # 1. Play Key 6 (title_hang)
+        im.play_activity(C.TITLE_HANG)
+        self.assertEqual(sm.current_state, C.TITLE_HANG)
+        self.assertTrue(bc._is_pinned, "TITLE_HANG must pin the companion in place")
+        self.assertFalse(bc._brain_timer.isActive(), "Brain timer must be stopped while in TITLE_HANG")
+
+        # Inactivity update must NOT change activity
+        bc.update_idle(999.0)
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "Idle inactivity must NOT change TITLE_HANG")
+
+        # App switch reaction must NOT change activity
+        bc.on_application_entered(True)
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "App enter reaction must NOT change TITLE_HANG")
+
+        # Decision tick must NOT change activity
+        bc._decide_next_action()
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "Decide next action must NOT change TITLE_HANG")
+
+        # 2. Play Key 7 (title_perch)
+        im.play_activity(C.TITLE_PERCH)
+        self.assertEqual(sm.current_state, C.TITLE_PERCH)
+        self.assertTrue(bc._is_pinned, "TITLE_PERCH must pin the companion in place")
+        self.assertFalse(bc._brain_timer.isActive(), "Brain timer must be stopped while in TITLE_PERCH")
+
+        # Inactivity update must NOT change activity
+        bc.update_idle(999.0)
+        self.assertEqual(sm.current_state, C.TITLE_PERCH, "Idle inactivity must NOT change TITLE_PERCH")
+
+        # App switch reaction must NOT change activity
+        bc.on_application_entered(True)
+        self.assertEqual(sm.current_state, C.TITLE_PERCH, "App enter reaction must NOT change TITLE_PERCH")
+
+        # Decision tick must NOT change activity
+        bc._decide_next_action()
+        self.assertEqual(sm.current_state, C.TITLE_PERCH, "Decide next action must NOT change TITLE_PERCH")
+
+        # 3. Switching to another activity unpins cleanly
+        im.play_activity(C.SWING)
+        self.assertEqual(sm.current_state, C.SWING)
+        self.assertFalse(bc._is_pinned, "Switching to another activity must unpin the companion")
+
+        # 4. Dropping to ground unpins cleanly
+        im.play_activity(C.TITLE_HANG)
+        self.assertTrue(bc._is_pinned)
+        bc.drop_to_ground()
+        self.assertFalse(bc._is_pinned, "drop_to_ground must unpin the companion")
+        self.assertEqual(sm.current_state, C.FALL)
+
+    def test_pinned_title_dock_drag_left_right_retains_pose_and_never_switches(self):
+        """User requirement: While pinned at top in 6th or 7th position, dragging left/right
+
+        MUST retain that exact position and pose without changing to DRAGGED, FALL, or switching activities.
+        """
+        from core.state_machine import StateMachine, CharacterState as C
+        from core.movement_controller import MovementController
+        from core.behavior_controller import BehaviorController
+        from core.interaction_manager import InteractionManager
+        from PySide6.QtCore import QPoint, QRect, Qt
+        from unittest.mock import MagicMock
+
+        sm = StateMachine(initial_state=C.IDLE)
+        movement = MovementController()
+        anim = MagicMock()
+        anim.has_animation.return_value = True
+
+        bc = BehaviorController(sm, movement, anim)
+        bc._is_active = True
+        bc.position_activity = lambda name: True
+        im = InteractionManager(sm, movement, None, animation=anim, behavior=bc)
+
+        class MockOverlayMgr:
+            def __init__(self):
+                self._dock_area = QRect(0, 0, 1920, 1080)
+                self._dock_state = None
+                self._dock_relative_x = 0.5
+                self._dock_timer = MagicMock()
+            def update_dock_drag_position(self, x, area=None):
+                pass
+
+        mock_overlay = MockOverlayMgr()
+        im.overlay_mgr = mock_overlay
+
+        # 1. Key 6 (TITLE_HANG): pinned at top
+        im.play_activity(C.TITLE_HANG)
+        mock_overlay._dock_state = "title_hang"
+        self.assertEqual(sm.current_state, C.TITLE_HANG)
+        self.assertTrue(bc._is_pinned)
+
+        # Click on Spider-Man to drag him left/right
+        im.handle_mouse_press(QPoint(500, 50), QPoint(20, 20), Qt.LeftButton)
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "Must stay in TITLE_HANG on press, not change to DRAGGED/FALL!")
+
+        # Drag all the way to the right side (where 75% boundary is)
+        im.handle_mouse_move(QPoint(1600, 52))
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "Must stay in TITLE_HANG while dragging to the right side!")
+        self.assertEqual(mock_overlay._dock_state, "title_hang")
+
+        # Drag back all the way to the left side
+        im.handle_mouse_move(QPoint(100, 51))
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "Must stay in TITLE_HANG while dragging to the left side!")
+
+        # Release mouse
+        im.handle_mouse_release(Qt.LeftButton)
+        self.assertEqual(sm.current_state, C.TITLE_HANG, "Must stay in TITLE_HANG upon release!")
+        self.assertTrue(bc._is_pinned, "Must remain securely pinned after drag release!")
+
+        # 2. Key 7 (TITLE_PERCH): pinned at top
+        im.play_activity(C.TITLE_PERCH)
+        mock_overlay._dock_state = "title_perch"
+        self.assertEqual(sm.current_state, C.TITLE_PERCH)
+        self.assertTrue(bc._is_pinned)
+
+        # Click on Spider-Man to drag him left/right
+        im.handle_mouse_press(QPoint(1600, 50), QPoint(20, 20), Qt.LeftButton)
+        self.assertEqual(sm.current_state, C.TITLE_PERCH, "Must stay in TITLE_PERCH on press, not change to DRAGGED/FALL!")
+
+        # Drag all the way to the left side (< 75% region)
+        im.handle_mouse_move(QPoint(200, 52))
+        self.assertEqual(sm.current_state, C.TITLE_PERCH, "Must stay in TITLE_PERCH while dragging across to left side!")
+        self.assertEqual(mock_overlay._dock_state, "title_perch")
+
+        # Release mouse
+        im.handle_mouse_release(Qt.LeftButton)
+        self.assertEqual(sm.current_state, C.TITLE_PERCH, "Must stay in TITLE_PERCH upon release!")
+        self.assertTrue(bc._is_pinned, "Must remain securely pinned after drag release!")
 
 
 if __name__ == "__main__":

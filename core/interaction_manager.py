@@ -145,14 +145,20 @@ class InteractionManager(QObject):
 
         is_shift = is_shift_pressed()
         self._shift_drag = is_shift
-        # If user moves him normally without Shift, unpin him!
-        if not is_shift and hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
-            self.behavior.set_pinned(False)
 
         # Check if currently attached to title bar (title_hang or title_perch)
-        if self.state_machine.current_state in (C.TITLE_HANG, C.TITLE_PERCH):
+        is_title_attached = (
+            self.state_machine.current_state in (C.TITLE_HANG, C.TITLE_PERCH)
+            or (hasattr(self, 'overlay_mgr') and self.overlay_mgr and getattr(self.overlay_mgr, '_dock_state', None) in ('title_hang', 'title_perch'))
+        )
+        if is_title_attached:
             self._is_title_hang_drag = True
-            self._title_hang_activity = self.state_machine.current_state
+            current_act = (
+                self.state_machine.current_state
+                if self.state_machine.current_state in (C.TITLE_HANG, C.TITLE_PERCH)
+                else (C.TITLE_HANG if getattr(self.overlay_mgr, '_dock_state', None) == 'title_hang' else C.TITLE_PERCH)
+            )
+            self._title_hang_activity = current_act
             self._title_hang_press_pos = global_pos
             self._title_hang_start_x = self.movement.x
             self._title_hang_start_y = self.movement.y
@@ -176,6 +182,10 @@ class InteractionManager(QObject):
                 self.behavior.user_override()
             self.movement.set_motion("hold", 0.0, 0.0)
             return True
+
+        # If user moves him normally without Shift, unpin him!
+        if not is_shift and hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
+            self.behavior.set_pinned(False)
 
         if self.behavior:
             self.behavior.user_override()
@@ -254,6 +264,8 @@ class InteractionManager(QObject):
                 self.movement.web_changed.emit(None)
                 if self.state_machine.current_state != C.TITLE_PERCH:
                     self.state_machine.transition_to(C.TITLE_PERCH, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
                 if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
                     self.overlay_mgr._dock_state = 'title_perch'
                     self.overlay_mgr.update_dock_drag_position(new_x)
@@ -269,6 +281,10 @@ class InteractionManager(QObject):
                 self.movement.web_changed.emit(((cx, top_anchor_y), (cx, attach_y)))
                 if self.state_machine.current_state != C.TITLE_HANG:
                     self.state_machine.transition_to(C.TITLE_HANG, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
+                if hasattr(self.behavior, "set_pinned"):
+                    self.behavior.set_pinned(True, keep_state=True)
                 if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
                     self.overlay_mgr._dock_state = 'title_hang'
                     self.overlay_mgr.update_dock_drag_position(new_x)
@@ -405,6 +421,8 @@ class InteractionManager(QObject):
                 self.movement.set_motion("hold", 0.0, 0.0)
                 if self.state_machine.current_state != C.TITLE_PERCH:
                     self.state_machine.transition_to(C.TITLE_PERCH, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
                 if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
                     self.overlay_mgr._dock_state = 'title_perch'
                     if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
@@ -423,6 +441,10 @@ class InteractionManager(QObject):
                 self.movement.set_motion("hold", 0.0, 0.0)
                 if self.state_machine.current_state != C.TITLE_HANG:
                     self.state_machine.transition_to(C.TITLE_HANG, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
+                if hasattr(self.behavior, "set_pinned"):
+                    self.behavior.set_pinned(True, keep_state=True)
                 if hasattr(self, 'overlay_mgr') and self.overlay_mgr:
                     self.overlay_mgr._dock_state = 'title_hang'
                     if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
@@ -501,6 +523,8 @@ class InteractionManager(QObject):
                         if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
                             self.overlay_mgr._dock_timer.start()
                     self.state_machine.transition_to(C.TITLE_PERCH, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
                     if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
                         self.overlay.show_speech_bubble("👀 Window title secured! Perching tight!", 1800, "action")
                 else:
@@ -518,6 +542,8 @@ class InteractionManager(QObject):
                         if hasattr(self.overlay_mgr, '_dock_timer') and hasattr(self.overlay_mgr._dock_timer, 'isActive') and not self.overlay_mgr._dock_timer.isActive():
                             self.overlay_mgr._dock_timer.start()
                     self.state_machine.transition_to(C.TITLE_HANG, force=True)
+                    if hasattr(self.behavior, "set_pinned"):
+                        self.behavior.set_pinned(True, keep_state=True)
                     if self.overlay and hasattr(self.overlay, "show_speech_bubble"):
                         self.overlay.show_speech_bubble("🕸️ Top bar secured! Hanging tight!", 1800, "comic")
             else:
@@ -586,6 +612,9 @@ class InteractionManager(QObject):
             if hasattr(self.behavior, 'position_activity'):
                 self.behavior.position_activity(state.value)
         self.state_machine.transition_to(state, force=True)
+        if state in (CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH):
+            if hasattr(self.behavior, "set_pinned"):
+                self.behavior.set_pinned(True, keep_state=True)
 
     def _request(self, state):
         if hasattr(self.behavior, "set_pinned") and getattr(self.behavior, "_is_pinned", False):
@@ -600,6 +629,9 @@ class InteractionManager(QObject):
             if hasattr(self.behavior, 'position_activity'):
                 self.behavior.position_activity(state.value)
         self.state_machine.transition_to(state, force=True)
+        if state in (CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH):
+            if hasattr(self.behavior, "set_pinned"):
+                self.behavior.set_pinned(True, keep_state=True)
 
     def handle_click(self):
         if not self._is_dragging:

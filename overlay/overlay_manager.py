@@ -48,6 +48,7 @@ class OverlayManager(QObject):
         self._dock_state = None
         self._dock_area = None
         self._dock_relative_x = None
+        self._dock_hwnd = None
         self._dock_timer = QTimer(self)
         self._dock_timer.setInterval(200)
         self._dock_timer.timeout.connect(self._refresh_dock)
@@ -202,6 +203,7 @@ class OverlayManager(QObject):
             self.movement.web_changed.emit(None)
             self._dock_relative_x = None
             self._dock_area = None
+            self._dock_hwnd = None
         if new.value in ('title_perch', 'title_hang', 'focus_read'):
             self.position_activity(new.value)
         else:
@@ -209,6 +211,7 @@ class OverlayManager(QObject):
             self._dock_timer.stop()
             self._dock_relative_x = None
             self._dock_area = None
+            self._dock_hwnd = None
 
 
     def _refresh_dock(self):
@@ -217,12 +220,17 @@ class OverlayManager(QObject):
         if getattr(self.movement, 'is_dragging', False):
             # Do NOT reposition while the user is actively dragging along the top bar!
             return
-        if self._dock_state and not self.position_activity(self._dock_state):
-            self._dock_state = None
-            self._dock_timer.stop()
-            self._dock_relative_x = None
-            self._dock_area = None
-            self.movement.set_motion('ground')
+        if self._dock_state:
+            # When docked in title_hang or title_perch, keep position updated but never fall to ground autonomously
+            if self._dock_state in ('title_hang', 'title_perch'):
+                self.position_activity(self._dock_state)
+            else:
+                if not self.position_activity(self._dock_state):
+                    self._dock_state = None
+                    self._dock_timer.stop()
+                    self._dock_relative_x = None
+                    self._dock_area = None
+                    self.movement.set_motion('ground')
 
     def position_activity(self, name):
         if name == 'focus_read':
@@ -235,10 +243,20 @@ class OverlayManager(QObject):
             x = area.x() + area.width() - self.movement.width - 24
             y = area.y() + area.height() - self.movement.height
         else:
-            window = self._active_window if self._display_mode == 'application' else WindowDetector.get_foreground_window()
-            # If foreground window is the desktop or pet's own process, search for the topmost visible app
-            if window and (window.title in ('Program Manager', '') or window.pid == os.getpid()):
-                window = None
+            window = None
+            if getattr(self, '_dock_hwnd', None):
+                try:
+                    inspected = WindowDetector.inspect(self._dock_hwnd)
+                    if inspected and inspected.is_visible and not inspected.is_minimized:
+                        window = inspected
+                except Exception:
+                    window = None
+
+            if window is None:
+                window = self._active_window if self._display_mode == 'application' else WindowDetector.get_foreground_window()
+                # If foreground window is the desktop or pet's own process, search for the topmost visible app
+                if window and (window.title in ('Program Manager', '') or window.pid == os.getpid()):
+                    window = None
 
             if not window or not window.is_visible or window.is_minimized:
                 # Find topmost visible application window
@@ -259,16 +277,23 @@ class OverlayManager(QObject):
                 ]
                 window = dashboard_vis[0] if dashboard_vis else None
 
-            if not window or not window.is_visible or window.is_minimized:
-                return False
+            area = None
+            if window and window.is_visible and not window.is_minimized:
+                self._dock_hwnd = window.hwnd
+                candidates = [part.intersected(allowed)
+                              for part in self.monitor_mgr.window_regions(window.rect)
+                              for allowed in self.movement.regions]
+                candidates = [a for a in candidates if a.width() >= self.movement.width and a.height() >= self.movement.height]
+                if candidates:
+                    area = min(candidates, key=lambda r: (r.top(), -r.right()))
 
-            candidates = [part.intersected(allowed)
-                          for part in self.monitor_mgr.window_regions(window.rect)
-                          for allowed in self.movement.regions]
-            candidates = [a for a in candidates if a.width() >= self.movement.width and a.height() >= self.movement.height]
-            if not candidates:
+            # If no eligible window is available, dock to the top ceiling of the active screen region
+            if area is None:
+                area = self.movement.active_region()
+                if area is None and self.movement.regions:
+                    area = self.movement.regions[0]
+            if area is None:
                 return False
-            area = min(candidates, key=lambda r: (r.top(), -r.right()))
 
             settings = getattr(self, 'settings', None) or get_settings()
             offset = max(0, min(120, int(settings.get('animations.title_bar_offset', 28))))
@@ -311,11 +336,16 @@ class OverlayManager(QObject):
             self._dock_timer.stop()
         return True
 
-    def update_dock_drag_position(self, x: int):
+    def update_dock_drag_position(self, x: int, area=None):
         """Update the relative horizontal anchor while dragging along the title bar."""
-        if self._dock_area and self._dock_state in ('title_hang', 'title_perch'):
-            avail_w = max(1, self._dock_area.width() - self.movement.width)
-            self._dock_relative_x = max(0.0, min(1.0, (x - self._dock_area.x()) / avail_w))
+        dock_area = area or self._dock_area
+        if dock_area is None and hasattr(self, 'movement'):
+            dock_area = self.movement.active_region() or (self.movement.regions[0] if self.movement.regions else None)
+            if dock_area:
+                self._dock_area = dock_area
+        if dock_area and self._dock_state in ('title_hang', 'title_perch'):
+            avail_w = max(1, dock_area.width() - self.movement.width)
+            self._dock_relative_x = max(0.0, min(1.0, (x - dock_area.x()) / avail_w))
 
     def default_position(self, area):
         choice = self.settings.get('general.default_position', 'bottom_right')

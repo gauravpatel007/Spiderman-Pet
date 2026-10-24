@@ -10,6 +10,10 @@ import os
 
 # Ensure package roots and dependencies are discoverable
 current_dir = os.path.dirname(os.path.abspath(__file__))
+try:
+    os.chdir(current_dir)
+except Exception:
+    pass
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 

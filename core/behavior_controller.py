@@ -89,7 +89,7 @@ class BehaviorController(QObject):
         else:
             self._is_pinned = False
             self.movement.set_motion('ground' if self.movement.is_grounded else 'air')
-            if not self.movement.is_grounded:
+            if not self.movement.is_grounded and self.state_machine.current_state not in (CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH, CharacterState.HANG, CharacterState.PERCH):
                 self.state_machine.transition_to(CharacterState.FALL, force=True)
             if self._is_active:
                 self._brain_timer.start()
@@ -213,7 +213,8 @@ class BehaviorController(QObject):
             self.movement.set_motion("hold", 0.0, 0.0)
             self.movement.vx = 0.0
             self.movement.vy = 0.0
-            self.animation.play("idle")
+            clip = new_state.value if new_state in (CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH, CharacterState.SIT) else "idle"
+            self.animation.play(clip)
             self._brain_timer.stop()
             return
         is_user_override = time.monotonic() < self._override_until
@@ -585,6 +586,9 @@ class BehaviorController(QObject):
             return
         if getattr(self, "_is_pinned", False) or self.movement.mode == "hold":
             self.set_pinned(False)
+            self.movement.orientation_changed.emit(0.0)
+            self.movement.web_changed.emit(None)
+            self.state_machine.transition_to(CharacterState.FALL, force=True)
             logger.info("Companion unpinned and dropped to ground via Spacebar.")
 
 
@@ -597,7 +601,7 @@ class BehaviorController(QObject):
 
     def update_idle(self, seconds: float) -> None:
         """Handle user inactivity progression and return-to-activity reactions."""
-        if getattr(self, "_is_pinned", False):
+        if getattr(self, "_is_pinned", False) or self.state_machine.current_state in (CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH):
             return
         if self.settings.get('behavior.focus_mode', False):
             if self._is_active:
@@ -658,7 +662,7 @@ class BehaviorController(QObject):
 
     def on_application_entered(self, is_new_app: bool = True) -> None:
         """Phase 10.2: Smart reaction when a selected application is brought into front."""
-        if not self._is_active or getattr(self, "_is_pinned", False):
+        if not self._is_active or getattr(self, "_is_pinned", False) or self.state_machine.current_state in (CharacterState.TITLE_HANG, CharacterState.TITLE_PERCH):
             return
         if is_new_app:
             C = CharacterState
@@ -772,8 +776,8 @@ class BehaviorController(QObject):
         elif state == C.SLEEP:
             self._choose([(C.IDLE, 1.0)])
         elif state in (C.TITLE_PERCH, C.TITLE_HANG):
-            # Explicit title-bar docking lasts until the user releases it.
-            self._schedule_decision()
+            # Explicit title-bar docking lasts indefinitely until user triggers another action
+            self._brain_timer.stop()
             return
         elif state in (C.PERCH, C.HANG):
             choices = [(C.FALL, 2.0)]
