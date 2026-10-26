@@ -5,8 +5,22 @@ Native Interactive Desktop Companion for Windows
 Entry point script.
 """
 import sys
-import PySide6
 import os
+
+# PyInstaller frozen application DLL path setup
+if getattr(sys, "frozen", False):
+    _base_dir = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
+    for _subdir in [".", "PySide6", "shiboken6"]:
+        _p = os.path.join(_base_dir, _subdir)
+        if os.path.isdir(_p):
+            try:
+                os.add_dll_directory(_p)
+            except Exception:
+                pass
+            if _p not in os.environ.get("PATH", ""):
+                os.environ["PATH"] = _p + os.pathsep + os.environ.get("PATH", "")
+
+import PySide6
 
 # Ensure package roots and dependencies are discoverable
 current_dir = os.path.dirname(os.path.abspath(__file__))

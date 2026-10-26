@@ -15,6 +15,20 @@ datas = [
     (os.path.join(project_dir, 'Frontend'), 'Frontend'),
 ]
 
+# Explicitly collect Shiboken6 runtime DLLs into PySide6, shiboken6, and root _internal
+shiboken_binaries = []
+try:
+    import shiboken6
+    shiboken_dir = os.path.dirname(shiboken6.__file__)
+    for f in os.listdir(shiboken_dir):
+        if f.lower().endswith(('.dll', '.pyd')):
+            src = os.path.join(shiboken_dir, f)
+            shiboken_binaries.append((src, 'shiboken6'))
+            shiboken_binaries.append((src, 'PySide6'))
+            shiboken_binaries.append((src, '.'))
+except Exception as e:
+    print(f"Warning: Could not collect shiboken6 binaries: {e}")
+
 hidden_imports = [
     'PySide6.QtCore',
     'PySide6.QtGui',
@@ -25,6 +39,7 @@ hidden_imports = [
     'PySide6.QtQuickWidgets',
     'PySide6.QtWebEngineWidgets',
     'PySide6.QtWebEngineCore',
+    'shiboken6',
     'http.server',
     'socketserver',
     'win32gui',
@@ -45,18 +60,21 @@ hidden_imports = [
 a = Analysis(
     ['main.py'],
     pathex=[project_dir],
-    binaries=[],
+    binaries=shiboken_binaries,
     datas=datas,
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['tkinter', 'matplotlib', 'numpy', 'scipy', 'pandas'],
+    excludes=['PyQt5', 'PyQt6', 'PyQt5_sip', 'PyQt6_sip', 'torch', 'tensorflow', 'tensorboard', 'scipy', 'matplotlib', 'numpy.testing', 'pandas', 'tkinter', 'IPython', 'jupyter'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
 )
+
+# Strip conflicting ICU dlls (Qt6 on Windows relies on C:\Windows\System32\icuuc.dll)
+a.binaries = [x for x in a.binaries if not os.path.basename(x[0]).lower().startswith(('icuuc', 'icudt', 'icuin'))]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
@@ -69,7 +87,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     target_arch=None,
@@ -84,7 +102,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='SpiderBuddy',
 )
